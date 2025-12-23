@@ -14,6 +14,7 @@ import { definePreset } from '@primeuix/themes'
 import { createI18n } from 'vue-i18n'
 import en from './i18n/en.json'
 import fr from './i18n/fr.json'
+import zh from './i18n/zh.json'
 
 const app = createApp(App)
 
@@ -37,6 +38,7 @@ const i18n = createI18n({
   messages: {
     en,
     fr,
+    zh,
   },
 })
 
