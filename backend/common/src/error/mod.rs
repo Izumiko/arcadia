@@ -449,6 +449,9 @@ pub enum Error {
     #[error("tmdb data fetching not available")]
     TMDBDataFetchingNotAvailable,
 
+    #[error("error fetching tmdb data")]
+    TMDBDataFetchingError,
+
     #[error("invalid tmdb url")]
     InvalidTMDBUrl,
 

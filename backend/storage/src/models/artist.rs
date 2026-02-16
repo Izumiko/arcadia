@@ -86,7 +86,7 @@ pub struct ArtistSearchResult {
     pub title_groups_amount: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize, sqlx::Type, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, sqlx::Type, ToSchema, PartialEq)]
 #[sqlx(type_name = "artist_role_enum")]
 pub enum ArtistRole {
     #[serde(rename = "main")]
