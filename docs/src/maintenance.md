@@ -97,6 +97,14 @@ SET torrents = (
     FROM torrents
     WHERE torrents.created_by_id = users.id
 );
+-- Update users.invited
+UPDATE users
+SET invited = (
+    SELECT COUNT(*)
+    FROM invitations
+    WHERE invitations.sender_id = users.id
+      AND invitations.receiver_id IS NOT NULL
+);
 -- Update torrents.seeders and torrents.leechers
 UPDATE torrents
 SET

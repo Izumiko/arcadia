@@ -54,6 +54,10 @@ impl ConnectionPool {
             return Err(Error::UsernameAlreadyExists);
         }
 
+        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
+            .begin()
+            .await?;
+
         let registered_user = sqlx::query_as!(
             User,
             r#"
@@ -83,22 +87,32 @@ impl ConnectionPool {
             arcadia_settings.default_user_bonus_points_on_registration,
             arcadia_settings.default_user_freeleech_tokens_on_registration
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&mut *tx)
         .await
         .map_err(Error::CouldNotCreateUser)?;
 
         if let Some(inv) = invitation {
-            // TODO: check this properly
-            let _ = sqlx::query!(
+            sqlx::query!(
                 r#"
                 UPDATE invitations SET receiver_id = $1 WHERE id = $2;
                 "#,
                 registered_user.id,
                 inv.id
             )
-            .execute(self.borrow())
-            .await;
+            .execute(&mut *tx)
+            .await?;
+
+            sqlx::query!(
+                r#"
+                UPDATE users SET invited = invited + 1 WHERE id = $1;
+                "#,
+                inv.sender_id
+            )
+            .execute(&mut *tx)
+            .await?;
         }
+
+        tx.commit().await?;
 
         Ok(registered_user)
     }
