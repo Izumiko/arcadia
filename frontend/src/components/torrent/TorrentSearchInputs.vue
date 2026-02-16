@@ -134,16 +134,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ContentContainer from '../ContentContainer.vue'
 import InputText from 'primevue/inputtext'
 import FloatLabel from 'primevue/floatlabel'
 import Button from 'primevue/button'
 import { Dropdown, InputNumber, MultiSelect } from 'primevue'
-import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { watch } from 'vue'
 import { TorrentSearchOrderByColumn, type TorrentSearch } from '@/services/api-schema'
 import { getOrderByDirectionOptions, getSelectableContentTypes, getSelectableVideoResolutions, getLanguages } from '@/services/helpers'
 import { Source, TitleGroupCategory } from '@/services/api-schema'
@@ -206,9 +204,13 @@ defineExpose({
   changePage,
 })
 
-onMounted(async () => {
-  searchForm.value = props.initialForm
-})
+watch(
+  () => props.initialForm,
+  (newForm) => {
+    searchForm.value = newForm
+  },
+  { immediate: true },
+)
 
 watch(
   () => searchForm.value,

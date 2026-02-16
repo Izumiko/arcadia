@@ -20,6 +20,7 @@
     :pageSize="searchForm.page_size"
     :initialPage="searchForm.page"
     :totalPages="totalPages"
+    @changePage="onPageChange"
   >
     <DataTable
       :value="searchResults"
@@ -119,6 +120,11 @@ const onSort = (event: DataTableSortEvent) => {
     searchForm.value.order_by_direction = event.sortOrder === 1 ? OrderByDirection.Asc : OrderByDirection.Desc
     updateUrl()
   }
+}
+
+const onPageChange = (pagination: { page: number }) => {
+  searchForm.value.page = pagination.page
+  updateUrl()
 }
 
 const updateUrl = () => {

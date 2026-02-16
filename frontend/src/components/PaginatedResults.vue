@@ -18,17 +18,13 @@
     :currentPage="currentPage"
     :totalPages="totalPages"
     :pageRanges="pageRanges"
-    @goToPage="goToPage($event)"
+    @goToPage="goToPage($event, true)"
   />
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import PaginationSelector from './PaginationSelector.vue'
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
 
 const props = defineProps<{
   totalItems: number
@@ -67,25 +63,24 @@ const pageRanges = computed(() => {
   })
 })
 
-const goToPage = (page: number) => {
+const goToPage = (page: number, scrollToTop = false) => {
   if (page < 1 || page > props.totalPages) return
   currentPage.value = page
-  router.push({
-    // path: route.path,
-    query: { page: page },
-  })
   emit('changePage', { page, pageSize: props.pageSize })
+  if (scrollToTop) window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 defineExpose({
   goToPage,
 })
 
-onMounted(() => {
-  if (props.initialPage) {
-    currentPage.value = props.initialPage
-  }
-})
+watch(
+  () => props.initialPage,
+  (newPage) => {
+    if (newPage) currentPage.value = newPage
+  },
+  { immediate: true },
+)
 </script>
 <style scoped>
 .pagination {

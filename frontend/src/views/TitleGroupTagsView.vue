@@ -14,6 +14,7 @@
     :pageSize="searchForm.page_size"
     :initialPage="searchForm.page"
     :totalPages="totalPages"
+    @changePage="onPageChange"
   >
     <DataTable :value="searchResults" size="small" lazy :sortField="searchForm.order_by_column" :sortOrder @sort="onSort">
       <Column :header="t('general.name')" field="name" sortable>
@@ -111,6 +112,11 @@ const editTagDialogVisible = ref(false)
 const deleteTagDialogVisible = ref(false)
 const tagBeingEdited = ref<EditedTitleGroupTag | null>(null)
 const tagBeingDeleted = ref<EditedTitleGroupTag | null>(null)
+
+const onPageChange = (pagination: { page: number }) => {
+  searchForm.value.page = pagination.page
+  router.push({ query: searchForm.value })
+}
 
 const updateUrl = () => {
   searchForm.value.page = 1

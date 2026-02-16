@@ -15,16 +15,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import TorrentSearchInputs from '@/components/torrent/TorrentSearchInputs.vue'
 import TitleGroupList from '@/components/title_group/TitleGroupList.vue'
 import type { titleGroupPreviewMode } from '@/components/title_group/TitleGroupList.vue'
 import { useRoute } from 'vue-router'
 import type { VNodeRef } from 'vue'
 import PaginatedResults from '@/components/PaginatedResults.vue'
-import { computed } from 'vue'
-import { watch } from 'vue'
-import { nextTick } from 'vue'
 import { searchTorrents, type TitleGroupHierarchyLite, type TorrentSearch } from '@/services/api-schema'
 
 const route = useRoute()
@@ -55,10 +52,8 @@ const parseArrayParam = (param: string | string[] | undefined): string[] => {
   return param.split(',')
 }
 
-const loadFormFromUrl = async () => {
+const loadFormFromUrl = () => {
   loading.value = true
-  initialForm.value = null
-  await nextTick()
   const form: TorrentSearch = {
     title_group_name: route.query.title_group_name?.toString() ?? '',
     page: route.query.page ? parseInt(route.query.page as string) : 1,
@@ -88,7 +83,7 @@ const loadFormFromUrl = async () => {
   search(initialForm.value)
 }
 
-onMounted(async () => {
+onMounted(() => {
   loadFormFromUrl()
 })
 
