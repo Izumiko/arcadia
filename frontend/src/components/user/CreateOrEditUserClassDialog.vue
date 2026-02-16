@@ -35,7 +35,7 @@
       <label>{{ t('user_class.max_snatches_per_day') }}</label>
     </FloatLabel>
     <FloatLabel>
-      <InputNumber v-model="displayPromotionCostBonusPoints" name="promotion_cost_bonus_points" :min="0" />
+      <InputNumber v-model="displayPromotionCostBonusPoints" name="promotion_cost_bonus_points" :min="0" :step="1" size="small" />
       <label>{{ t('user_class.promotion_cost') }} ({{ publicArcadiaSettings.bonus_points_alias }})</label>
     </FloatLabel>
 

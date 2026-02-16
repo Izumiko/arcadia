@@ -26,6 +26,9 @@
             <span v-else-if="slotProps.data.type === 'bytes'">
               {{ bytesToReadable(slotProps.data[userClass.name]) }}
             </span>
+            <span v-else-if="slotProps.data.type === 'bonus_points'">
+              {{ rawToDisplayBp(slotProps.data[userClass.name], publicArcadiaSettings.bonus_points_decimal_places) }}
+            </span>
             <span v-else-if="slotProps.data.type === 'ratio'">
               {{ slotProps.data[userClass.name].toFixed(2) }}
             </span>
@@ -52,11 +55,13 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Column, DataTable, Dialog } from 'primevue'
 import { getAllUserClasses, type UserClass } from '@/services/api-schema'
-import { bytesToReadable } from '@/services/helpers'
+import { bytesToReadable, rawToDisplayBp } from '@/services/helpers'
+import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import CreateOrEditUserClassDialog from '@/components/user/CreateOrEditUserClassDialog.vue'
 import { useUserStore } from '@/stores/user'
 
 const { t } = useI18n()
+const publicArcadiaSettings = usePublicArcadiaSettingsStore()
 
 const userClasses = ref<UserClass[]>([])
 const loading = ref(true)
@@ -65,7 +70,7 @@ const userClassBeingEdited = ref<UserClass>()
 
 interface TableRow {
   attribute: string
-  type: 'boolean' | 'number' | 'bytes' | 'ratio' | 'text' | 'array'
+  type: 'boolean' | 'number' | 'bytes' | 'ratio' | 'text' | 'array' | 'bonus_points'
   [key: string]: string | number | boolean | string[]
 }
 
@@ -94,6 +99,7 @@ const buildTableRows = () => {
     { key: 'automatic_demotion', label: t('user_class.automatic_demotion'), type: 'boolean' },
     { key: 'promotion_allowed_while_warned', label: t('user_class.promotion_allowed_while_warned'), type: 'boolean' },
     { key: 'previous_user_class', label: t('user_class.previous_user_class'), type: 'text' },
+    { key: 'promotion_cost_bonus_points', label: t('user_class.promotion_cost'), type: 'bonus_points' },
     { key: 'max_snatches_per_day', label: t('user_class.max_snatches_per_day'), type: 'number' },
     { key: 'required_uploaded', label: t('user_class.required_uploaded'), type: 'bytes' },
     { key: 'required_downloaded', label: t('user_class.required_downloaded'), type: 'bytes' },
