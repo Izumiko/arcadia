@@ -1731,6 +1731,7 @@ export interface PublicArcadiaSettings {
     'bonus_points_decimal_places': number;
     'displayable_user_stats': Array<DisplayableUserStats>;
     'displayed_top_bar_stats': Array<DisplayedTopBarStats>;
+    'emails_enabled': boolean;
     'global_download_factor': number;
     'global_upload_factor': number;
     'logo_subtitle'?: string | null;

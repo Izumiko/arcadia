@@ -5,7 +5,7 @@
         <InputText class="input" name="email" v-model="invitation.receiver_email" />
         <label for="email">{{ t('user.email') }}</label>
       </FloatLabel>
-      <FloatLabel>
+      <FloatLabel v-if="publicArcadiaSettings.emails_enabled">
         <Textarea class="input" name="body" type="text" rows="7" v-model="invitation.message" />
         <label for="body">{{ t('user.invitation_message') }}</label>
       </FloatLabel>
@@ -18,7 +18,9 @@
       </div>
     </div>
     <div v-else class="invitation-sent">
-      Invitation sent! Registration link:
+      <template v-if="publicArcadiaSettings.emails_enabled">Invitation sent!</template>
+      <template v-else>Emails aren't enabled, you need to give the registration link to the on your own.</template>
+      Registration link:
       <br />
       <span class="link">
         {{ `${domain}/register?invitation_key=${createdInvitation?.invitation_key}` }}
@@ -34,8 +36,10 @@ import { ref } from 'vue'
 import { InputText } from 'primevue'
 import { useI18n } from 'vue-i18n'
 import { createInvitation, type Invitation, type SentInvitation } from '@/services/api-schema'
+import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 
 const { t } = useI18n()
+const publicArcadiaSettings = usePublicArcadiaSettingsStore()
 
 const props = defineProps<{
   receiverEmail: string

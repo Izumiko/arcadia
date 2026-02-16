@@ -11,6 +11,7 @@ const initialState: PublicArcadiaSettings = {
   displayed_top_bar_stats: [],
   displayable_user_stats: [],
   torrent_request_vote_currencies: [],
+  emails_enabled: false,
 }
 
 export const usePublicArcadiaSettingsStore = defineStore('publicArcadiaSettings', {

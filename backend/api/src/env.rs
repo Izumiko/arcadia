@@ -78,4 +78,7 @@ pub struct SmtpConfig {
     pub from_email: Option<String>,
     #[envconfig(from = "SMTP_FROM_NAME")]
     pub from_name: Option<String>,
+    // set in the smtp initializer. if it fails, leave it false, otherwise true
+    #[envconfig(default = "false")]
+    pub emails_enabled: bool,
 }

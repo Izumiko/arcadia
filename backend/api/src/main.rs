@@ -19,7 +19,7 @@ async fn main() -> std::io::Result<()> {
 
     arcadia_shared::telemetry::init_telemetry();
 
-    let env = Env::init_from_env().unwrap();
+    let mut env = Env::init_from_env().unwrap();
 
     let server_url = format!("{}:{}", env.actix.host, env.actix.port);
     println!("Server running at http://{server_url}");
@@ -28,7 +28,6 @@ async fn main() -> std::io::Result<()> {
         println!("TMDB_API_KEY env var is not set. TMDB data fetching won't be available")
     }
 
-    // Log email configuration status
     if env.smtp.host.is_some()
         && env.smtp.port.is_some()
         && env.smtp.username.is_some()
@@ -36,6 +35,7 @@ async fn main() -> std::io::Result<()> {
         && env.smtp.from_email.is_some()
         && env.smtp.from_name.is_some()
     {
+        env.smtp.emails_enabled = true;
         println!("Email service configured and enabled");
     } else {
         println!("Email service not configured - emails will be skipped");

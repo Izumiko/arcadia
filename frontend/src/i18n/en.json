@@ -225,7 +225,7 @@
     "unread_announcements": "You have {0} unread announcement | You have {0} unread announcements",
     "unread_notifications_staff_pms": "You have unread message(s) in {0} staff PM | You have unread message(s) in {0} staff PMs",
     "send_invitation": "Send invitation",
-    "invitation_message": "Invitation message",
+    "invitation_message": "Invitation message (added in the email)",
     "manage_permissions": "Manage permissions",
     "change_user_class": "Change user class",
     "lock_user_class": "Lock user class",

@@ -137,4 +137,5 @@ pub struct PublicArcadiaSettings {
     pub displayed_top_bar_stats: Vec<DisplayedTopBarStats>,
     pub displayable_user_stats: Vec<DisplayableUserStats>,
     pub torrent_request_vote_currencies: Vec<TorrentRequestVoteCurrency>,
+    pub emails_enabled: bool,
 }
