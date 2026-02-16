@@ -124,6 +124,38 @@ pub async fn check_and_deduct_snatch_cost(
         AnnounceError::InternalTrackerError
     })?;
 
+    match sqlx::query!(
+        r#"
+        SELECT
+            u.username,
+            tg.id AS title_group_id,
+            tg.name AS title_group_name
+        FROM users u
+        LEFT JOIN torrents t ON t.id = $1
+        LEFT JOIN edition_groups eg ON eg.id = t.edition_group_id
+        LEFT JOIN title_groups tg ON tg.id = eg.title_group_id
+        WHERE u.id = $2
+        "#,
+        torrent_id as i32,
+        user_id as i32,
+    )
+    .fetch_one(pool)
+    .await
+    {
+        Ok(row) => {
+            log::info!(
+                "check_and_deduct_snatch_cost: user=\"{}\" (id={}), title_group=\"{}\" (title_group_id={}, torrent_id={}), cost={}, is_uploader={}, has_existing_leeching_activity={}, deducted={}, transfer_to={:?}",
+                row.username, user_id, row.title_group_name, row.title_group_id, torrent_id, cost, is_uploader, has_existing_leeching_activity, deducted, transfer_to
+            );
+        }
+        Err(e) => {
+            log::error!(
+                "Failed to fetch log info for check_and_deduct_snatch_cost: {}",
+                e
+            );
+        }
+    }
+
     Ok(())
 }
 
