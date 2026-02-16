@@ -436,11 +436,13 @@ const toggleRow = (torrent: TorrentHierarchyLite) => {
   }
 }
 
+const editionGroupMap = computed(() => new Map(editionGroups.map((group) => [group.id, group])))
+
 const getEditionGroupById = (editionGroupId: number): EditionGroupInfoLite => {
-  return editionGroups.find((group) => group.id === editionGroupId) as EditionGroupInfoLite
+  return editionGroupMap.value.get(editionGroupId) as EditionGroupInfoLite
 }
 const getEditionGroupCreatorIdById = (editionGroupId: number): number => {
-  return (editionGroups as EditionGroupHierarchy[]).find((group) => group.id === editionGroupId)!.created_by_id
+  return (editionGroupMap.value.get(editionGroupId) as EditionGroupHierarchy).created_by_id
 }
 const getEditionGroupSlugById = (editionGroupId: number): string => {
   const editionGroup = getEditionGroupById(editionGroupId)

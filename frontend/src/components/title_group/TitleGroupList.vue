@@ -5,7 +5,7 @@
     </div>
   </ContentContainer>
   <template v-if="titleGroupPreview === 'table'">
-    <TitleGroupPreviewTable
+    <LazyTitleGroupPreviewTable
       v-for="title_group in titleGroups"
       :key="title_group.id"
       :title_group="title_group as TitleGroupHierarchyLite"
@@ -21,7 +21,7 @@
 import type { TitleGroupHierarchyLite, TitleGroupLite } from '@/services/api-schema'
 import ContentContainer from '../ContentContainer.vue'
 import TitleGroupPreviewCoverOnly from './TitleGroupPreviewCoverOnly.vue'
-import TitleGroupPreviewTable from './TitleGroupPreviewTable.vue'
+import LazyTitleGroupPreviewTable from './LazyTitleGroupPreviewTable.vue'
 
 export type titleGroupPreviewMode = 'table' | 'cover-only'
 
