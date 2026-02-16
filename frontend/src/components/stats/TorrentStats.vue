@@ -65,7 +65,7 @@
         </div>
         <div class="grouped-charts-row">
           <Chart class="chart grouped-line-chart" type="line" :data="groupedData[groupBy].line" :options="groupedLineOptions" />
-          <Chart class="chart grouped-pie-chart" type="pie" :data="groupedData[groupBy].pie" :options="groupedPieOptions" :plugins="[pieOuterLabelsPlugin]" />
+          <Chart class="chart grouped-pie-chart" type="pie" :data="groupedData[groupBy].pie" :options="groupedPieOptions" :plugins="[OutLabelsPlugin]" />
         </div>
       </template>
     </div>
@@ -83,7 +83,7 @@ import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getTorrentStats, StatsInterval, TorrentStatsGroupBy, type TorrentStatsResponse } from '@/services/api-schema'
 import { bytesToReadable, formatDateToLocalString, formatDateTimeLabel } from '@/services/helpers'
-import { pieOuterLabelsPlugin } from '@/services/pieOuterLabelsPlugin'
+import OutLabelsPlugin from '@energiency/chartjs-plugin-piechart-outlabels'
 
 const { t } = useI18n()
 
@@ -276,7 +276,7 @@ const groupedLineOptions = {
 
 const groupedPieOptions = computed(() => ({
   maintainAspectRatio: false,
-  layout: { padding: 40 },
+  layout: { padding: { top: 30, bottom: 30, left: 80, right: 80 } },
   plugins: {
     legend: { display: false },
     tooltip: {
@@ -287,6 +287,17 @@ const groupedPieOptions = computed(() => ({
           return `${t('stats.total_size')}: ${bytesToReadable(size)}`
         },
       },
+    },
+    outlabels: {
+      text: '%l',
+      color: getComputedStyle(document.documentElement).getPropertyValue('color') || '#ccc',
+      stretch: 30,
+      font: { size: 11, resizable: true, minSize: 9 },
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      lineColor: getComputedStyle(document.documentElement).getPropertyValue('color') || '#ccc',
+      lineWidth: 1,
+      padding: { top: 2, right: 4, bottom: 2, left: 4 },
     },
   },
 }))
