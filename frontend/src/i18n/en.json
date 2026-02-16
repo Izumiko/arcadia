@@ -469,7 +469,8 @@
     }
   },
   "statistics": {
-    "statistics": "Statistics",
+    "community_stats": "Community Stats",
+    "library_stats": "Library Stats",
     "enabled_users": "Enabled users",
     "users_active_today": "Users active today",
     "users_active_this_week": "Users active this week",

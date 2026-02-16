@@ -1227,11 +1227,17 @@ export interface HomePage {
 }
 export interface HomeStats {
     'artists': number;
+    'collages': number;
     'enabled_users': number;
-    'entities': number;
+    'leechers': number;
+    'peers': number;
+    'seeders': number;
+    'series': number;
+    'snatches': number;
     'titles': number;
+    'torrent_requests': number;
+    'torrent_requests_filled': number;
     'torrents': number;
-    'torrents_uploaded_today': number;
     'users_active_this_month': number;
     'users_active_this_week': number;
     'users_active_today': number;

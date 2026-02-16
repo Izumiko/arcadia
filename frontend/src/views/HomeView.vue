@@ -27,14 +27,39 @@
       </div>
     </div>
     <div class="sidebar">
-      <ContentContainer :containerTitle="t('statistics.statistics')" v-if="stats">
-        <div v-for="(value, statName) in stats" :key="statName">
-          {{ t(`statistics.${statName}`) }}: {{ value }}
-          <span v-if="statName.includes('users_active')">({{ ((value / stats.enabled_users) * 100).toFixed(2) }}%)</span>
-          <RouterLink v-if="statName === 'torrents'" to="/stats?tab=torrents">
-            <i class="pi pi-chart-bar" />
-          </RouterLink>
+      <ContentContainer :containerTitle="t('statistics.community_stats')" v-if="stats">
+        <div>{{ t('statistics.enabled_users') }}: {{ stats.enabled_users }}</div>
+        <div>
+          {{ t('statistics.users_active_today') }}: {{ stats.users_active_today }} ({{ ((stats.users_active_today / stats.enabled_users) * 100).toFixed(2) }}%)
         </div>
+        <div>
+          {{ t('statistics.users_active_this_week') }}: {{ stats.users_active_this_week }} ({{
+            ((stats.users_active_this_week / stats.enabled_users) * 100).toFixed(2)
+          }}%)
+        </div>
+        <div>
+          {{ t('statistics.users_active_this_month') }}: {{ stats.users_active_this_month }} ({{
+            ((stats.users_active_this_month / stats.enabled_users) * 100).toFixed(2)
+          }}%)
+        </div>
+      </ContentContainer>
+      <ContentContainer :containerTitle="t('statistics.library_stats')" v-if="stats" style="margin-top: 10px">
+        <div>
+          {{ t('statistics.torrents') }}: {{ stats.torrents }}
+          <RouterLink to="/stats?tab=torrents"><i class="pi pi-chart-bar" /></RouterLink>
+        </div>
+        <div>
+          {{ t('torrent.requests') }}: {{ stats.torrent_requests }} ({{ ((stats.torrent_requests_filled / stats.torrent_requests) * 100).toFixed(2) }}%
+          {{ t('torrent_request.filled') }})
+        </div>
+        <div>{{ t('torrent.peers') }}: {{ stats.peers }}</div>
+        <div>{{ t('torrent.seeder', 2) }}: {{ stats.seeders }}</div>
+        <div>{{ t('torrent.leecher', 2) }}: {{ stats.leechers }}</div>
+        <div>{{ t('user.snatches', 2) }}: {{ stats.snatches }}</div>
+        <div>{{ t('statistics.titles') }}: {{ stats.titles }}</div>
+        <div>{{ t('statistics.artists') }}: {{ stats.artists }}</div>
+        <div>{{ t('series.series', 2) }}: {{ stats.series }}</div>
+        <div>{{ t('collage.collage', 2) }}: {{ stats.collages }}</div>
       </ContentContainer>
     </div>
   </div>
