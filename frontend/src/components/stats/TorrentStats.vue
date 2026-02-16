@@ -52,7 +52,7 @@
       </ContentContainer>
     </div>
     <h3>{{ t('stats.overall_uploads') }}</h3>
-    <Chart class="chart" type="line" :data="chartData" :options="chartOptions" />
+    <Chart class="chart" :options="overallChartOptions" />
     <div v-for="groupBy in selectedGroupBys" :key="groupBy" class="grouped-chart">
       <h3>{{ groupByLabel(groupBy) }}</h3>
       <ProgressSpinner v-if="!groupedStats[groupBy]" />
@@ -64,8 +64,8 @@
           </span>
         </div>
         <div class="grouped-charts-row">
-          <Chart class="chart grouped-line-chart" type="line" :data="groupedData[groupBy].line" :options="groupedLineOptions" />
-          <Chart class="chart grouped-pie-chart" type="pie" :data="groupedData[groupBy].pie" :options="groupedPieOptions" :plugins="[OutLabelsPlugin]" />
+          <Chart class="chart grouped-line-chart" :options="groupedData[groupBy].lineOptions" />
+          <Chart class="chart grouped-pie-chart" :options="groupedData[groupBy].pieOptions" />
         </div>
       </template>
     </div>
@@ -74,7 +74,8 @@
 
 <script setup lang="ts">
 import ContentContainer from '@/components/ContentContainer.vue'
-import Chart from 'primevue/chart'
+import { Chart } from 'highcharts-vue'
+import Highcharts from 'highcharts'
 import MultiSelect from 'primevue/multiselect'
 import ProgressSpinner from 'primevue/progressspinner'
 import Select from 'primevue/select'
@@ -83,7 +84,6 @@ import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getTorrentStats, StatsInterval, TorrentStatsGroupBy, type TorrentStatsResponse } from '@/services/api-schema'
 import { bytesToReadable, formatDateToLocalString, formatDateTimeLabel } from '@/services/helpers'
-import OutLabelsPlugin from '@energiency/chartjs-plugin-piechart-outlabels'
 
 const { t } = useI18n()
 
@@ -175,48 +175,51 @@ const CHART_COLORS = [
   '#65A30D',
 ]
 
-const chartData = computed(() => {
+const textColor = () => getComputedStyle(document.documentElement).getPropertyValue('color') || '#ccc'
+
+const baseChartOptions: Highcharts.Options = {
+  chart: {
+    backgroundColor: 'transparent',
+  },
+  title: { text: undefined },
+  credits: { enabled: false },
+  legend: { enabled: false },
+}
+
+const overallChartOptions = computed<Highcharts.Options>(() => {
   if (!overallTorrentStats.value) return {}
+  const data = overallTorrentStats.value.data
   return {
-    labels: overallTorrentStats.value.data.map((d) => formatDateTimeLabel(d.period, interval.value)),
-    datasets: [
+    ...baseChartOptions,
+    chart: { ...baseChartOptions.chart, type: 'line' },
+    xAxis: {
+      categories: data.map((d) => formatDateTimeLabel(d.period, interval.value)),
+      labels: { style: { color: textColor() } },
+    },
+    yAxis: {
+      title: { text: undefined },
+      labels: { style: { color: textColor() } },
+    },
+    series: [
       {
-        label: t('stats.count'),
-        data: overallTorrentStats.value.data.map((d) => d.count),
-        totalSizes: overallTorrentStats.value.data.map((d) => d.total_size),
-        pointRadius: 0,
-        pointHoverRadius: 5,
+        type: 'line',
+        name: t('stats.count'),
+        data: data.map((d, i) => ({ y: d.count, totalSize: d.total_size, index: i })),
+        color: CHART_COLORS[0],
+        marker: { enabled: false, states: { hover: { enabled: true, radius: 5 } } },
       },
     ],
+    tooltip: {
+      formatter() {
+        const point = this as unknown as Highcharts.Point & { totalSize?: number }
+        return `<b>${point.category}</b><br/>${point.series.name}: ${point.y}<br/>${t('stats.total_size')}: ${bytesToReadable(point.totalSize ?? 0)}`
+      },
+    },
   }
 })
 
-const chartOptions = computed(() => ({
-  maintainAspectRatio: false,
-  interaction: {
-    mode: 'index' as const,
-    intersect: false,
-  },
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      callbacks: {
-        afterBody: (items: { dataIndex: number }[]) => {
-          if (!items.length) return ''
-          const idx = items[0].dataIndex
-          const size = chartData.value.datasets?.[0]?.totalSizes?.[idx]
-          if (size === undefined) return ''
-          return `${t('stats.total_size')}: ${bytesToReadable(size)}`
-        },
-      },
-    },
-  },
-}))
-
 const groupedData = computed(() => {
-  const result: Record<string, { attributes: string[]; line: object; pie: object }> = {}
+  const result: Record<string, { attributes: string[]; lineOptions: Highcharts.Options; pieOptions: Highcharts.Options }> = {}
   for (const groupBy of selectedGroupBys.value) {
     const stats = groupedStats[groupBy]
     if (!stats) continue
@@ -230,77 +233,68 @@ const groupedData = computed(() => {
     }
 
     const attributes = [...byAttr.keys()]
-    const colors = attributes.map((_, i) => CHART_COLORS[i % CHART_COLORS.length])
 
-    result[groupBy] = {
-      attributes,
-      line: {
-        labels: periods.map((p) => formatDateTimeLabel(p, interval.value)),
-        datasets: attributes.map((attr, i) => ({
-          label: attr,
-          data: periods.map((p) => byAttr.get(attr)?.get(p)?.count ?? 0),
-          borderColor: colors[i],
-          backgroundColor: colors[i],
-          pointRadius: 0,
-          pointHoverRadius: 5,
-        })),
+    const lineOptions: Highcharts.Options = {
+      ...baseChartOptions,
+      chart: { ...baseChartOptions.chart, type: 'line' },
+      xAxis: {
+        categories: periods.map((p) => formatDateTimeLabel(p, interval.value)),
+        labels: { style: { color: textColor() } },
       },
-      pie: {
-        labels: attributes,
-        datasets: [
-          {
-            data: attributes.map((attr) => {
-              let sum = 0
-              for (const v of byAttr.get(attr)!.values()) sum += v.count
-              return sum
-            }),
-            totalSizes: attributes.map((attr) => {
-              let sum = 0
-              for (const v of byAttr.get(attr)!.values()) sum += v.totalSize
-              return sum
-            }),
-            backgroundColor: colors,
+      yAxis: {
+        title: { text: undefined },
+        labels: { style: { color: textColor() } },
+      },
+      tooltip: {
+        shared: true,
+      },
+      series: attributes.map((attr, i) => ({
+        type: 'line' as const,
+        name: attr,
+        data: periods.map((p) => byAttr.get(attr)?.get(p)?.count ?? 0),
+        color: CHART_COLORS[i % CHART_COLORS.length],
+        marker: { enabled: false, states: { hover: { enabled: true, radius: 5 } } },
+      })),
+    }
+
+    const pieData = attributes.map((attr, i) => {
+      let countSum = 0
+      let sizeSum = 0
+      for (const v of byAttr.get(attr)!.values()) {
+        countSum += v.count
+        sizeSum += v.totalSize
+      }
+      return { name: attr, y: countSum, totalSize: sizeSum, color: CHART_COLORS[i % CHART_COLORS.length] }
+    })
+
+    const pieOptions: Highcharts.Options = {
+      ...baseChartOptions,
+      chart: { ...baseChartOptions.chart, type: 'pie' },
+      series: [
+        {
+          type: 'pie',
+          data: pieData,
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}',
+            connectorColor: textColor(),
+            style: { color: textColor(), textOutline: 'none', fontSize: '11px' },
+            distance: 25,
           },
-        ],
+        },
+      ],
+      tooltip: {
+        formatter() {
+          const point = this as unknown as Highcharts.Point & { totalSize?: number }
+          return `<b>${point.name}</b><br/>${t('stats.count')}: ${point.y}<br/>${t('stats.total_size')}: ${bytesToReadable(point.totalSize ?? 0)}`
+        },
       },
     }
+
+    result[groupBy] = { attributes, lineOptions, pieOptions }
   }
   return result
 })
-
-const groupedLineOptions = {
-  maintainAspectRatio: false,
-  interaction: { mode: 'index' as const, intersect: false },
-  plugins: { legend: { display: false } },
-}
-
-const groupedPieOptions = computed(() => ({
-  maintainAspectRatio: false,
-  layout: { padding: { top: 30, bottom: 30, left: 80, right: 80 } },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        afterLabel: (item: { dataIndex: number; chart: { data: { datasets: { totalSizes: number[] }[] } } }) => {
-          const size = item.chart.data.datasets[0]?.totalSizes?.[item.dataIndex]
-          if (size === undefined) return ''
-          return `${t('stats.total_size')}: ${bytesToReadable(size)}`
-        },
-      },
-    },
-    outlabels: {
-      text: '%l',
-      color: getComputedStyle(document.documentElement).getPropertyValue('color') || '#ccc',
-      stretch: 30,
-      font: { size: 11, resizable: true, minSize: 9 },
-      backgroundColor: 'transparent',
-      borderColor: 'transparent',
-      lineColor: getComputedStyle(document.documentElement).getPropertyValue('color') || '#ccc',
-      lineWidth: 1,
-      padding: { top: 2, right: 4, bottom: 2, left: 4 },
-    },
-  },
-}))
 
 const fetchTorrentStats = () => {
   const { from, to } = dateRangeFromSelection.value
@@ -410,7 +404,6 @@ watch(selectedGroupBys, () => {
 
 .grouped-charts-row {
   display: flex;
-  gap: 15px;
 }
 
 .grouped-line-chart {
