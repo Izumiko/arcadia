@@ -35,9 +35,17 @@ pub fn meets_requirements(user: &UserWithStats, class: &UserClass) -> bool {
         return false;
     }
 
+    if user.torrent_uploads < class.required_torrent_uploads {
+        return false;
+    }
+
     if user.torrent_uploads_in_unique_title_groups
         < class.required_torrent_uploads_in_unique_title_groups
     {
+        return false;
+    }
+
+    if user.title_group_comments < class.required_title_group_comments {
         return false;
     }
 
@@ -67,7 +75,9 @@ mod tests {
             snatched: 50,
             forum_posts: 100,
             seeding_size: 20_000_000_000, // 20 GB
+            torrent_uploads: 15,
             torrent_uploads_in_unique_title_groups: 10,
+            title_group_comments: 10,
             forum_posts_in_unique_threads: 20,
         }
     }

@@ -1016,12 +1016,24 @@ impl ConnectionPool {
                 u.forum_posts,
                 u.seeding_size,
                 COALESCE(
+                    (SELECT COUNT(*)
+                     FROM torrents t
+                     WHERE t.created_by_id = u.id),
+                    0
+                )::int as "torrent_uploads!",
+                COALESCE(
                     (SELECT COUNT(DISTINCT eg.title_group_id)
                      FROM torrents t
                      INNER JOIN edition_groups eg ON t.edition_group_id = eg.id
                      WHERE t.created_by_id = u.id),
                     0
                 )::int as "torrent_uploads_in_unique_title_groups!",
+                COALESCE(
+                    (SELECT COUNT(*)
+                     FROM title_group_comments tgc
+                     WHERE tgc.created_by_id = u.id),
+                    0
+                )::int as "title_group_comments!",
                 COALESCE(
                     (SELECT COUNT(DISTINCT fp.forum_thread_id)
                      FROM forum_posts fp
@@ -1055,12 +1067,24 @@ impl ConnectionPool {
                 u.forum_posts,
                 u.seeding_size,
                 COALESCE(
+                    (SELECT COUNT(*)
+                     FROM torrents t
+                     WHERE t.created_by_id = u.id),
+                    0
+                )::int as "torrent_uploads!",
+                COALESCE(
                     (SELECT COUNT(DISTINCT eg.title_group_id)
                      FROM torrents t
                      INNER JOIN edition_groups eg ON t.edition_group_id = eg.id
                      WHERE t.created_by_id = u.id),
                     0
                 )::int as "torrent_uploads_in_unique_title_groups!",
+                COALESCE(
+                    (SELECT COUNT(*)
+                     FROM title_group_comments tgc
+                     WHERE tgc.created_by_id = u.id),
+                    0
+                )::int as "title_group_comments!",
                 COALESCE(
                     (SELECT COUNT(DISTINCT fp.forum_thread_id)
                      FROM forum_posts fp

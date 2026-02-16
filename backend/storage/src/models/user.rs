@@ -475,6 +475,8 @@ pub struct UserWithStats {
     pub snatched: i32,
     pub forum_posts: i32,
     pub seeding_size: i64,
+    pub torrent_uploads: i32,
     pub torrent_uploads_in_unique_title_groups: i32,
+    pub title_group_comments: i32,
     pub forum_posts_in_unique_threads: i32,
 }
