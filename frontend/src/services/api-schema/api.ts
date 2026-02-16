@@ -63,6 +63,10 @@ export interface ArcadiaSettings {
     'bonus_points_per_endpoint': Array<BonusPointsEndpoint>;
     'default_css_sheet_name': string;
     'default_torrent_bonus_points_cost': number;
+    'default_user_bonus_points_on_registration': number;
+    'default_user_downloaded_on_registration': number;
+    'default_user_freeleech_tokens_on_registration': number;
+    'default_user_uploaded_on_registration': number;
     'displayable_user_stats': Array<DisplayableUserStats>;
     'displayed_top_bar_stats': Array<DisplayedTopBarStats>;
     'global_download_factor': number;

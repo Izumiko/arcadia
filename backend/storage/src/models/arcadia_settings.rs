@@ -101,6 +101,10 @@ pub struct ArcadiaSettings {
     pub torrent_request_vote_currencies: Vec<TorrentRequestVoteCurrency>,
     #[schema(value_type = Vec<BonusPointsEndpoint>)]
     pub bonus_points_per_endpoint: Json<Vec<BonusPointsEndpoint>>,
+    pub default_user_uploaded_on_registration: i64,
+    pub default_user_downloaded_on_registration: i64,
+    pub default_user_bonus_points_on_registration: i64,
+    pub default_user_freeleech_tokens_on_registration: i32,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema, PartialEq)]

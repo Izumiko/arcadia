@@ -195,6 +195,38 @@
         <Checkbox v-model="settings.open_signups" name="open_signups" :binary="true" inputId="open_signups" style="margin-right: 5px" />
         <label for="open_signups">{{ t('arcadia_settings.open_signups') }}</label>
 
+        <FloatLabel>
+          <InputNumber v-model="settings.default_user_uploaded_on_registration" name="default_user_uploaded_on_registration" :min="0" :step="1" size="small" />
+          <label>{{ t('arcadia_settings.default_user_uploaded_on_registration') }}</label>
+        </FloatLabel>
+
+        <FloatLabel>
+          <InputNumber
+            v-model="settings.default_user_downloaded_on_registration"
+            name="default_user_downloaded_on_registration"
+            :min="0"
+            :step="1"
+            size="small"
+          />
+          <label>{{ t('arcadia_settings.default_user_downloaded_on_registration') }}</label>
+        </FloatLabel>
+
+        <FloatLabel>
+          <InputNumber v-model="displayDefaultBonusPointsOnRegistration" name="default_user_bonus_points_on_registration" :min="0" :step="1" size="small" />
+          <label>{{ t('arcadia_settings.default_user_bonus_points_on_registration') }}</label>
+        </FloatLabel>
+
+        <FloatLabel>
+          <InputNumber
+            v-model="settings.default_user_freeleech_tokens_on_registration"
+            name="default_user_freeleech_tokens_on_registration"
+            :min="0"
+            :step="1"
+            size="small"
+          />
+          <label>{{ t('arcadia_settings.default_user_freeleech_tokens_on_registration') }}</label>
+        </FloatLabel>
+
         <BBCodeEditor
           :label="t('arcadia_settings.automated_message_on_signup')"
           :initialValue="settings.automated_message_on_signup ?? ''"
@@ -316,6 +348,7 @@ const displayTorrentBonusPointsCostMin = makeBpComputed('torrent_bonus_points_co
 const displayTorrentBonusPointsCostMax = makeBpComputed('torrent_bonus_points_cost_max')
 const displayShopFreeleechTokenBasePrice = makeBpComputed('shop_freeleech_token_base_price')
 const displayShopUploadBasePricePerGb = makeBpComputed('shop_upload_base_price_per_gb')
+const displayDefaultBonusPointsOnRegistration = makeBpComputed('default_user_bonus_points_on_registration')
 
 const torrentMaxReleaseDateAllowed = computed({
   get: () => {

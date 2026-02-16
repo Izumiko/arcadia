@@ -254,7 +254,11 @@ CREATE TABLE arcadia_settings (
     displayed_top_bar_stats displayed_top_bar_stats_enum[] NOT NULL DEFAULT '{uploaded,downloaded,bonus_points}',
     bonus_points_per_endpoint JSONB NOT NULL DEFAULT '[]',
     displayable_user_stats displayable_user_stats_enum[] NOT NULL DEFAULT '{uploaded,real_uploaded,downloaded,real_downloaded,ratio,title_groups,edition_groups,torrents,forum_posts,forum_threads,title_group_comments,request_comments,artist_comments,seeding,leeching,snatched,seeding_size,requests_filled,collages_started,requests_voted,average_seeding_time,invited,invitations,bonus_points,freeleech_tokens,current_streak,highest_streak}',
-    torrent_request_vote_currencies torrent_request_vote_currency_enum[] NOT NULL DEFAULT '{upload,bonus_points}'
+    torrent_request_vote_currencies torrent_request_vote_currency_enum[] NOT NULL DEFAULT '{upload,bonus_points}',
+    default_user_uploaded_on_registration BIGINT NOT NULL DEFAULT 0,
+    default_user_downloaded_on_registration BIGINT NOT NULL DEFAULT 1,
+    default_user_bonus_points_on_registration BIGINT NOT NULL DEFAULT 0,
+    default_user_freeleech_tokens_on_registration INT NOT NULL DEFAULT 0
 );
 INSERT INTO arcadia_settings (user_class_name_on_signup, default_css_sheet_name, open_signups, global_upload_factor, global_download_factor, bonus_points_given_on_upload, allow_uploader_set_torrent_bonus_points_cost, default_torrent_bonus_points_cost)
 VALUES ('newbie', 'arcadia', TRUE, 100, 100, 100, FALSE, 0);

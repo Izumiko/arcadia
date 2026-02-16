@@ -43,7 +43,11 @@ impl ConnectionPool {
                     displayed_top_bar_stats as "displayed_top_bar_stats: Vec<DisplayedTopBarStats>",
                     displayable_user_stats as "displayable_user_stats: Vec<DisplayableUserStats>",
                     torrent_request_vote_currencies as "torrent_request_vote_currencies: _",
-                    bonus_points_per_endpoint as "bonus_points_per_endpoint: Json<Vec<BonusPointsEndpoint>>"
+                    bonus_points_per_endpoint as "bonus_points_per_endpoint: Json<Vec<BonusPointsEndpoint>>",
+                    default_user_uploaded_on_registration,
+                    default_user_downloaded_on_registration,
+                    default_user_bonus_points_on_registration,
+                    default_user_freeleech_tokens_on_registration
                 FROM arcadia_settings
                 LIMIT 1
             "#,
@@ -91,7 +95,11 @@ impl ConnectionPool {
                     displayed_top_bar_stats = $26,
                     displayable_user_stats = $27,
                     torrent_request_vote_currencies = $28,
-                    bonus_points_per_endpoint = $29
+                    bonus_points_per_endpoint = $29,
+                    default_user_uploaded_on_registration = $30,
+                    default_user_downloaded_on_registration = $31,
+                    default_user_bonus_points_on_registration = $32,
+                    default_user_freeleech_tokens_on_registration = $33
                 RETURNING
                     user_class_name_on_signup,
                     default_css_sheet_name,
@@ -121,7 +129,11 @@ impl ConnectionPool {
                     displayed_top_bar_stats as "displayed_top_bar_stats: Vec<DisplayedTopBarStats>",
                     displayable_user_stats as "displayable_user_stats: Vec<DisplayableUserStats>",
                     torrent_request_vote_currencies as "torrent_request_vote_currencies: _",
-                    bonus_points_per_endpoint as "bonus_points_per_endpoint: Json<Vec<BonusPointsEndpoint>>"
+                    bonus_points_per_endpoint as "bonus_points_per_endpoint: Json<Vec<BonusPointsEndpoint>>",
+                    default_user_uploaded_on_registration,
+                    default_user_downloaded_on_registration,
+                    default_user_bonus_points_on_registration,
+                    default_user_freeleech_tokens_on_registration
             "#,
             settings.user_class_name_on_signup,
             settings.default_css_sheet_name,
@@ -153,7 +165,11 @@ impl ConnectionPool {
             &settings.displayed_top_bar_stats as &[DisplayedTopBarStats],
             &settings.displayable_user_stats as &[DisplayableUserStats],
             &settings.torrent_request_vote_currencies as &[TorrentRequestVoteCurrency],
-            &settings.bonus_points_per_endpoint as &Json<Vec<BonusPointsEndpoint>>
+            &settings.bonus_points_per_endpoint as &Json<Vec<BonusPointsEndpoint>>,
+            settings.default_user_uploaded_on_registration,
+            settings.default_user_downloaded_on_registration,
+            settings.default_user_bonus_points_on_registration,
+            settings.default_user_freeleech_tokens_on_registration
         )
         .fetch_one(self.borrow())
         .await

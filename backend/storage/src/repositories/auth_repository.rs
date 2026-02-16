@@ -57,8 +57,8 @@ impl ConnectionPool {
         let registered_user = sqlx::query_as!(
             User,
             r#"
-                INSERT INTO users (username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions, max_snatches_per_day)
-                SELECT $1, $2, $3, $4, $5, $6, $7, uc.new_permissions, uc.max_snatches_per_day
+                INSERT INTO users (username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions, max_snatches_per_day, uploaded, downloaded, bonus_points, freeleech_tokens)
+                SELECT $1, $2, $3, $4, $5, $6, $7, uc.new_permissions, uc.max_snatches_per_day, $8, $9, $10, $11
                 FROM user_classes uc
                 WHERE uc.name = $6::VARCHAR(30)
                 RETURNING id, username, avatar, email, password_hash, registered_from_ip, created_at,
@@ -77,7 +77,11 @@ impl ConnectionPool {
             from_ip,
             passkey,
             arcadia_settings.user_class_name_on_signup,
-            arcadia_settings.default_css_sheet_name
+            arcadia_settings.default_css_sheet_name,
+            arcadia_settings.default_user_uploaded_on_registration,
+            arcadia_settings.default_user_downloaded_on_registration,
+            arcadia_settings.default_user_bonus_points_on_registration,
+            arcadia_settings.default_user_freeleech_tokens_on_registration
         )
         .fetch_one(self.borrow())
         .await

@@ -712,7 +712,11 @@
     "bp_endpoint_path_prefix": "Path prefix",
     "bp_endpoint_amount": "Amount",
     "bp_endpoint_probability": "Probability",
-    "add_bp_endpoint": "Add endpoint"
+    "add_bp_endpoint": "Add endpoint",
+    "default_user_uploaded_on_registration": "Default uploaded (bytes) on registration",
+    "default_user_downloaded_on_registration": "Default downloaded (bytes) on registration",
+    "default_user_bonus_points_on_registration": "Default bonus points on registration",
+    "default_user_freeleech_tokens_on_registration": "Default freeleech tokens on registration"
   },
   "donation": {
     "donation": "Donation | Donations",

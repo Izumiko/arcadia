@@ -558,3 +558,39 @@ async fn test_registration_no_automated_message_when_not_configured(pool: PgPool
 
     assert_eq!(conversations_array.len(), 0);
 }
+
+#[sqlx::test(migrations = "../storage/migrations")]
+async fn test_registration_applies_default_values_from_settings(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+
+    let mut settings = pool.get_arcadia_settings().await.unwrap();
+    settings.default_user_uploaded_on_registration = 1_000_000;
+    settings.default_user_downloaded_on_registration = 500_000;
+    settings.default_user_bonus_points_on_registration = 250;
+    settings.default_user_freeleech_tokens_on_registration = 5;
+    pool.update_arcadia_settings(&settings).await.unwrap();
+
+    let service = create_test_app(pool.clone(), MockRedisPool::default()).await;
+
+    let req = TestRequest::post()
+        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .uri("/api/auth/register")
+        .set_json(RegisterRequest {
+            username: "test_defaults",
+            password: "TestPassword123",
+            password_verify: "TestPassword123",
+            email: "test_defaults@testdomain.com",
+        })
+        .to_request();
+
+    let resp = call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+
+    let registered_user = read_body_json_data::<RegisterResponse, _>(resp).await;
+    let user = pool.find_user_with_id(registered_user.id).await.unwrap();
+
+    assert_eq!(user.uploaded, 1_000_000);
+    assert_eq!(user.downloaded, 500_000);
+    assert_eq!(user.bonus_points, 250);
+    assert_eq!(user.freeleech_tokens, 5);
+}
