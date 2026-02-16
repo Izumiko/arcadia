@@ -227,7 +227,7 @@
   </Form>
 </template>
 <script setup lang="ts">
-import { ref, computed, toRaw, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Form, type FormFieldState, type FormResolverOptions, type FormSubmitEvent } from '@primevue/forms'
 import FloatLabel from 'primevue/floatlabel'
 import InputText from 'primevue/inputtext'
@@ -569,7 +569,7 @@ const removeEmbeddedLink = (index: number) => {
 
 onMounted(async () => {
   if (props.initialTitleGroup) {
-    Object.assign(titleGroupForm.value, _.pick(structuredClone(toRaw(props.initialTitleGroup)), Object.keys(titleGroupForm.value)))
+    Object.assign(titleGroupForm.value, _.pick(JSON.parse(JSON.stringify(props.initialTitleGroup)), Object.keys(titleGroupForm.value)))
     if (titleGroupForm.value.external_links.length === 0) {
       titleGroupForm.value.external_links.push('')
     }

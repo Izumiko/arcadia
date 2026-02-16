@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRaw } from 'vue'
+import { ref } from 'vue'
 import FloatLabel from 'primevue/floatlabel'
 import Select from 'primevue/select'
 import { useTitleGroupStore } from '@/stores/titleGroup'
@@ -66,7 +66,7 @@ const editionGroupSelected = () => {
 }
 const sendEditionGroup = (editionGroupForm?: UserCreatedEditionGroup) => {
   creatingEditionGroup.value = true
-  const formattededitionGroupForm = structuredClone(toRaw(editionGroupForm))
+  const formattededitionGroupForm = JSON.parse(JSON.stringify(editionGroupForm)) as UserCreatedEditionGroup
   if (!formattededitionGroupForm) return
   // otherwise there is a json parse error, last char is "Z"
   // formattededitionGroupForm.release_date = formattededitionGroupForm.release_date.slice(0, -1)

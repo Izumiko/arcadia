@@ -44,7 +44,6 @@ import { getArtistRoles } from '@/services/helpers'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onMounted } from 'vue'
-import { toRaw } from 'vue'
 import {
   createArtists,
   type AffiliatedArtistHierarchy,
@@ -123,7 +122,7 @@ onMounted(() => {
     props.initialArtistsAffiliations.forEach((aa: AffiliatedArtistHierarchy | UserCreatedAffiliatedArtist) => {
       affiliated_artists_names.value.push('artist' in aa ? aa.artist.name : '')
     })
-    affiliated_artists.value = structuredClone(toRaw(props.initialArtistsAffiliations))
+    affiliated_artists.value = JSON.parse(JSON.stringify(props.initialArtistsAffiliations))
   }
   componentReady.value = true
 })
