@@ -56,7 +56,18 @@
     <div v-for="groupBy in selectedGroupBys" :key="groupBy" class="grouped-chart">
       <h3>{{ groupByLabel(groupBy) }}</h3>
       <ProgressSpinner v-if="!groupedStats[groupBy]" />
-      <Chart v-else class="chart" type="line" :data="buildGroupedChartData(groupBy)" :options="groupedChartOptions" />
+      <template v-else>
+        <div class="grouped-legend">
+          <span v-for="(attr, i) in groupedData[groupBy].attributes" :key="attr" class="legend-item">
+            <span class="legend-color" :style="{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }" />
+            {{ attr }}
+          </span>
+        </div>
+        <div class="grouped-charts-row">
+          <Chart class="chart grouped-line-chart" type="line" :data="groupedData[groupBy].line" :options="groupedLineOptions" />
+          <Chart class="chart grouped-pie-chart" type="pie" :data="groupedData[groupBy].pie" :options="groupedPieOptions" :plugins="[pieOuterLabelsPlugin]" />
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -72,6 +83,7 @@ import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getTorrentStats, StatsInterval, TorrentStatsGroupBy, type TorrentStatsResponse } from '@/services/api-schema'
 import { bytesToReadable, formatDateToLocalString, formatDateTimeLabel } from '@/services/helpers'
+import { pieOuterLabelsPlugin } from '@/services/pieOuterLabelsPlugin'
 
 const { t } = useI18n()
 
@@ -203,48 +215,74 @@ const chartOptions = computed(() => ({
   },
 }))
 
-const buildGroupedChartData = (groupBy: TorrentStatsGroupBy) => {
-  const stats = groupedStats[groupBy]
-  if (!stats) return {}
+const groupedData = computed(() => {
+  const result: Record<string, { attributes: string[]; line: object; pie: object }> = {}
+  for (const groupBy of selectedGroupBys.value) {
+    const stats = groupedStats[groupBy]
+    if (!stats) continue
 
-  const periods = [...new Set(stats.data.map((d) => d.period))].sort()
-  const attributeValues = [...new Set(stats.data.map((d) => d.attribute_value!))]
+    const periods = [...new Set(stats.data.map((d) => d.period))].sort()
+    const byAttr = new Map<string, Map<string, { count: number; totalSize: number }>>()
+    for (const point of stats.data) {
+      const attr = point.attribute_value!
+      if (!byAttr.has(attr)) byAttr.set(attr, new Map())
+      byAttr.get(attr)!.set(point.period, { count: point.count, totalSize: point.total_size })
+    }
 
-  const dataByAttribute = new Map<string, Map<string, { count: number; totalSize: number }>>()
-  for (const point of stats.data) {
-    const attr = point.attribute_value!
-    if (!dataByAttribute.has(attr)) dataByAttribute.set(attr, new Map())
-    dataByAttribute.get(attr)!.set(point.period, { count: point.count, totalSize: point.total_size })
+    const attributes = [...byAttr.keys()]
+    const colors = attributes.map((_, i) => CHART_COLORS[i % CHART_COLORS.length])
+
+    result[groupBy] = {
+      attributes,
+      line: {
+        labels: periods.map((p) => formatDateTimeLabel(p, interval.value)),
+        datasets: attributes.map((attr, i) => ({
+          label: attr,
+          data: periods.map((p) => byAttr.get(attr)?.get(p)?.count ?? 0),
+          borderColor: colors[i],
+          backgroundColor: colors[i],
+          pointRadius: 0,
+          pointHoverRadius: 5,
+        })),
+      },
+      pie: {
+        labels: attributes,
+        datasets: [
+          {
+            data: attributes.map((attr) => {
+              let sum = 0
+              for (const v of byAttr.get(attr)!.values()) sum += v.count
+              return sum
+            }),
+            totalSizes: attributes.map((attr) => {
+              let sum = 0
+              for (const v of byAttr.get(attr)!.values()) sum += v.totalSize
+              return sum
+            }),
+            backgroundColor: colors,
+          },
+        ],
+      },
+    }
   }
+  return result
+})
 
-  return {
-    labels: periods.map((p) => formatDateTimeLabel(p, interval.value)),
-    datasets: attributeValues.map((attr, i) => ({
-      label: attr,
-      data: periods.map((p) => dataByAttribute.get(attr)?.get(p)?.count ?? 0),
-      totalSizes: periods.map((p) => dataByAttribute.get(attr)?.get(p)?.totalSize ?? 0),
-      borderColor: CHART_COLORS[i % CHART_COLORS.length],
-      backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
-      pointRadius: 0,
-      pointHoverRadius: 5,
-    })),
-  }
+const groupedLineOptions = {
+  maintainAspectRatio: false,
+  interaction: { mode: 'index' as const, intersect: false },
+  plugins: { legend: { display: false } },
 }
 
-const groupedChartOptions = computed(() => ({
+const groupedPieOptions = computed(() => ({
   maintainAspectRatio: false,
-  interaction: {
-    mode: 'index' as const,
-    intersect: false,
-  },
+  layout: { padding: 40 },
   plugins: {
-    legend: {
-      display: true,
-    },
+    legend: { display: false },
     tooltip: {
       callbacks: {
-        afterLabel: (item: { datasetIndex: number; dataIndex: number; chart: { data: { datasets: { totalSizes: number[] }[] } } }) => {
-          const size = item.chart.data.datasets[item.datasetIndex]?.totalSizes?.[item.dataIndex]
+        afterLabel: (item: { dataIndex: number; chart: { data: { datasets: { totalSizes: number[] }[] } } }) => {
+          const size = item.chart.data.datasets[0]?.totalSizes?.[item.dataIndex]
           if (size === undefined) return ''
           return `${t('stats.total_size')}: ${bytesToReadable(size)}`
         },
@@ -335,6 +373,41 @@ watch(selectedGroupBys, () => {
 
 .grouped-chart {
   margin-top: 30px;
+}
+
+.grouped-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85em;
+}
+
+.legend-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.grouped-charts-row {
+  display: flex;
+  gap: 15px;
+}
+
+.grouped-line-chart {
+  flex: 2;
+}
+
+.grouped-pie-chart {
+  flex: 1;
 }
 h3 {
   text-align: center;
