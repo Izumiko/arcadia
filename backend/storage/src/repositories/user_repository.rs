@@ -370,28 +370,42 @@ impl ConnectionPool {
         sqlx::query_as!(
             UserClass,
             r#"
+                WITH RECURSIVE class_chain AS (
+                    SELECT name, 0 as position
+                    FROM user_classes
+                    WHERE previous_user_class IS NULL
+                      AND name IN (
+                          SELECT previous_user_class FROM user_classes
+                          WHERE previous_user_class IS NOT NULL
+                      )
+                    UNION ALL
+                    SELECT uc.name, cc.position + 1
+                    FROM user_classes uc
+                    JOIN class_chain cc ON uc.previous_user_class = cc.name
+                )
                 SELECT
-                    name,
-                    new_permissions as "new_permissions: Vec<UserPermission>",
-                    max_snatches_per_day,
-                    automatic_promotion,
-                    automatic_demotion,
-                    promotion_allowed_while_warned,
-                    previous_user_class,
-                    required_account_age_in_days,
-                    required_ratio,
-                    required_torrent_uploads,
-                    required_torrent_uploads_in_unique_title_groups,
-                    required_uploaded,
-                    required_torrent_snatched,
-                    required_downloaded,
-                    required_forum_posts,
-                    required_forum_posts_in_unique_threads,
-                    required_title_group_comments,
-                    required_seeding_size,
-                    promotion_cost_bonus_points
-                FROM user_classes
-                ORDER BY name
+                    uc.name,
+                    uc.new_permissions as "new_permissions: Vec<UserPermission>",
+                    uc.max_snatches_per_day,
+                    uc.automatic_promotion,
+                    uc.automatic_demotion,
+                    uc.promotion_allowed_while_warned,
+                    uc.previous_user_class,
+                    uc.required_account_age_in_days,
+                    uc.required_ratio,
+                    uc.required_torrent_uploads,
+                    uc.required_torrent_uploads_in_unique_title_groups,
+                    uc.required_uploaded,
+                    uc.required_torrent_snatched,
+                    uc.required_downloaded,
+                    uc.required_forum_posts,
+                    uc.required_forum_posts_in_unique_threads,
+                    uc.required_title_group_comments,
+                    uc.required_seeding_size,
+                    uc.promotion_cost_bonus_points
+                FROM user_classes uc
+                LEFT JOIN class_chain cc ON uc.name = cc.name
+                ORDER BY cc.position IS NULL, cc.position, uc.name
             "#
         )
         .fetch_all(self.borrow())
