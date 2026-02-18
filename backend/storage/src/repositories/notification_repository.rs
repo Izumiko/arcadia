@@ -2,6 +2,7 @@ use crate::{
     connection_pool::ConnectionPool,
     models::notification::{
         NotificationForumThreadPost, NotificationStaffPmMessage, NotificationTitleGroupComment,
+        NotificationTorrentRequestComment,
     },
 };
 use arcadia_common::error::{Error, Result};
@@ -275,6 +276,118 @@ impl ConnectionPool {
                 WHERE title_group_id = $1 AND user_id = $2
             "#,
             title_group_id,
+            user_id
+        )
+        .execute(self.borrow())
+        .await
+        .map_err(Error::CouldNotMarkNotificationAsRead)?;
+
+        Ok(())
+    }
+
+    pub async fn notify_users_torrent_request_comments(
+        tx: &mut Transaction<'_, Postgres>,
+        torrent_request_id: i64,
+        comment_id: i64,
+        current_user_id: i32,
+    ) -> Result<()> {
+        sqlx::query!(
+            r#"
+                WITH user_ids AS (
+                    SELECT user_id
+                    FROM subscriptions_torrent_request_comments
+                    WHERE torrent_request_id = $1
+                    AND user_id != $3
+                )
+                INSERT INTO notifications_torrent_request_comments (user_id, torrent_request_comment_id, torrent_request_id)
+                SELECT
+                    user_id,
+                    $2,
+                    $1
+                FROM user_ids u
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM notifications_torrent_request_comments n
+                    WHERE n.user_id = u.user_id
+                      AND n.torrent_request_id = $1
+                      AND n.read_status = FALSE
+                )
+            "#,
+            torrent_request_id,
+            comment_id,
+            current_user_id
+        )
+        .execute(&mut **tx)
+        .await
+        .map_err(Error::CouldNotCreateNotification)?;
+
+        Ok(())
+    }
+
+    pub async fn find_unread_notifications_amount_torrent_request_comments(
+        &self,
+        user_id: i32,
+    ) -> Result<i64> {
+        let count = sqlx::query_scalar!(
+            r#"
+            SELECT COUNT(*)
+            FROM notifications_torrent_request_comments
+            WHERE user_id = $1 AND read_status = FALSE
+            "#,
+            user_id
+        )
+        .fetch_one(self.borrow())
+        .await
+        .map_err(Error::CouldNotGetUnreadNotifications)?
+        .unwrap_or(0);
+
+        Ok(count)
+    }
+
+    pub async fn find_notifications_torrent_request_comments(
+        &self,
+        user_id: i32,
+        include_read: bool,
+    ) -> Result<Vec<NotificationTorrentRequestComment>> {
+        let notifications = sqlx::query_as!(
+            NotificationTorrentRequestComment,
+            r#"
+            SELECT
+                n.id,
+                n.torrent_request_comment_id,
+                n.torrent_request_id,
+                tg.name AS title_group_name,
+                n.created_at,
+                n.read_status
+            FROM notifications_torrent_request_comments n
+            JOIN torrent_requests tr ON tr.id = n.torrent_request_id
+            JOIN title_groups tg ON tg.id = tr.title_group_id
+            WHERE n.user_id = $1
+            AND ($2::bool = TRUE OR n.read_status = FALSE)
+            ORDER BY n.created_at DESC
+            "#,
+            user_id,
+            include_read
+        )
+        .fetch_all(self.borrow())
+        .await
+        .map_err(Error::CouldNotGetUnreadNotifications)?;
+
+        Ok(notifications)
+    }
+
+    pub async fn mark_notification_torrent_request_comment_as_read(
+        &self,
+        torrent_request_id: i64,
+        user_id: i32,
+    ) -> Result<()> {
+        sqlx::query!(
+            r#"
+                UPDATE notifications_torrent_request_comments
+                SET read_status = TRUE
+                WHERE torrent_request_id = $1 AND user_id = $2
+            "#,
+            torrent_request_id,
             user_id
         )
         .execute(self.borrow())

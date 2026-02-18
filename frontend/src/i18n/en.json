@@ -223,6 +223,7 @@
     "unread_notifications_forum_thread_posts": "You have unread posts(s) in {0} subscribed forum thread | You have unread post(s) in {0} subscribed forum threads",
     "unread_notifications_title_group_comments": "You have unread comment(s) in {0} subscribed title group | You have unread comment(s) in {0} subscribed title groups",
     "unread_announcements": "You have {0} unread announcement | You have {0} unread announcements",
+    "unread_notifications_torrent_request_comments": "You have unread comment(s) in {0} subscribed torrent request | You have unread comment(s) in {0} subscribed torrent requests",
     "unread_notifications_staff_pms": "You have unread message(s) in {0} staff PM | You have unread message(s) in {0} staff PMs",
     "send_invitation": "Send invitation",
     "invitation_message": "Invitation message (added in the email)",
@@ -456,7 +457,11 @@
     "invalid_fill_link": "Invalid torrent permalink",
     "include_filled": "Include filled requests",
     "requested_by": "Requested by",
-    "filled_by": "Filled by"
+    "filled_by": "Filled by",
+    "subscribe_to_comments": "Subscribe for new comments",
+    "unsubscribe_to_comments": "Unsubscribe for new comments",
+    "subscription_successful": "Subscription successful",
+    "unsubscription_successful": "Unsubscription successful"
   },
   "entity": {
     "entity": "Entity | Entities",
@@ -530,7 +535,7 @@
     "notification": "Notification | Notifications",
     "forum_thread_posts": "Forum thread posts",
     "title_group_comments": "Title group comments",
-    "title_group_torrents": "Title group torrents",
+    "torrent_request_comments": "Torrent request comments",
     "notified_at": "Notified at",
     "no_notification": "No notification"
   },

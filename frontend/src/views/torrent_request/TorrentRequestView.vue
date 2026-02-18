@@ -12,12 +12,13 @@
       <div class="actions">
         <div>
           <i v-if="togglingSubscription" class="pi pi-hourglass" />
-          <!-- <i
+          <i
             v-else
-            v-tooltip.top="t(`general.${titleGroupAndAssociatedData.is_subscribed ? 'un' : ''}subscribe`)"
-            @click="toggleSubscribtion"
-            :class="`pi pi-bell${titleGroupAndAssociatedData.is_subscribed ? '-slash' : ''}`"
-          /> -->
+            v-tooltip.top="t(`torrent_request.${torrentRequestAndAssociatedData.is_subscribed_to_comments ? 'un' : ''}subscribe_to_comments`)"
+            @click="toggleCommentSubscription"
+            :class="`pi pi-bell${torrentRequestAndAssociatedData.is_subscribed_to_comments ? '-slash' : ''}`"
+          />
+          <span class="icon-letter">C</span>
           <i v-tooltip.top="t('general.bookmark')" class="pi pi-bookmark" />
         </div>
         <div>
@@ -83,25 +84,16 @@ import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'
 import TitleGroupSidebar from '@/components/title_group/TitleGroupSidebar.vue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import TorrentRequestVotesTable from '@/components/torrent_request/TorrentRequestVotesTable.vue'
-// import { getTitleGroup, type TitleGroup, type TitleGroupAndAssociatedData } from '@/services/api/torrentService'
-// import TitleGroupTable from '@/components/title_group/TitleGroupTable.vue'
-// import TorrentRequestsTable from '@/components/torrent_request/TorrentRequestsTable.vue'
-// import Accordion from 'primevue/accordion'
-// import AccordionPanel from 'primevue/accordionpanel'
-// import AccordionHeader from 'primevue/accordionheader'
-// import AccordionContent from 'primevue/accordioncontent'
 import TitleGroupSlimHeader from '@/components/title_group/TitleGroupSlimHeader.vue'
-// import { subscribeToItem, unsubscribeToItem } from '@/services/api/generalService'
-// import { useTitleGroupStore } from '@/stores/titleGroup'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-// import { showToast } from '@/main'
-// import type { TitleGroupCommentHierarchy } from '@/services/api/commentService'
-// import type { AffiliatedArtistHierarchy } from '@/services/api/artistService'
+import { showToast } from '@/main'
 import TorrentRequestDetails from '@/components/torrent_request/TorrentRequestDetails.vue'
 import TorrentRequestComments from '@/components/torrent_request/TorrentRequestComments.vue'
 import {
+  createTorrentRequestCommentsSubscription,
   getTorrentRequest,
+  removeTorrentRequestCommentsSubscription,
   type TorrentRequestAndAssociatedData,
   type TorrentRequestCommentHierarchy,
   type TorrentRequestVoteHierarchy,
@@ -113,11 +105,8 @@ const route = useRoute()
 const userStore = useUserStore()
 const { t } = useI18n()
 
-// const titleGroupStore = useTitleGroupStore()
-
 const torrentRequestAndAssociatedData = ref<TorrentRequestAndAssociatedData>()
 const togglingSubscription = ref(false)
-// const siteName = import.meta.env.VITE_SITE_NAME
 
 onMounted(async () => {
   await fetchTorrentRequest()
@@ -152,28 +141,28 @@ const uploadTorrent = () => {
   router.push({ path: '/upload' })
 }
 
-// const toggleSubscribtion = async () => {
-//   if (titleGroupAndAssociatedData.value) {
-//     togglingSubscription.value = true
-//     if (titleGroupAndAssociatedData.value.is_subscribed) {
-//       await unsubscribeToItem(parseInt(route.params.id.toString()), 'title_group')
-//     } else {
-//       await subscribeToItem(parseInt(route.params.id.toString()), 'title_group')
-//     }
-//     titleGroupAndAssociatedData.value.is_subscribed = !titleGroupAndAssociatedData.value.is_subscribed
-//     showToast(
-//       'Success',
-//       t(`title_group.${titleGroupAndAssociatedData.value.is_subscribed ? 'subscription_successful' : 'unsubscription_successful'}`),
-//       'success',
-//       3000,
-//     )
-//     togglingSubscription.value = false
-//   }
-// }
-
-// const newComment = (comment: TitleGroupCommentHierarchy) => {
-//   titleGroupAndAssociatedData.value?.title_group_comments.push(comment)
-// }
+const toggleCommentSubscription = () => {
+  if (torrentRequestAndAssociatedData.value) {
+    togglingSubscription.value = true
+    const id = parseInt(route.params.id.toString())
+    const action = torrentRequestAndAssociatedData.value.is_subscribed_to_comments
+      ? removeTorrentRequestCommentsSubscription(id)
+      : createTorrentRequestCommentsSubscription(id)
+    action
+      .then(() => {
+        torrentRequestAndAssociatedData.value!.is_subscribed_to_comments = !torrentRequestAndAssociatedData.value!.is_subscribed_to_comments
+        showToast(
+          'Success',
+          t(`torrent_request.${torrentRequestAndAssociatedData.value!.is_subscribed_to_comments ? 'subscription_successful' : 'unsubscription_successful'}`),
+          'success',
+          3000,
+        )
+      })
+      .finally(() => {
+        togglingSubscription.value = false
+      })
+  }
+}
 
 const voted = (vote: TorrentRequestVoteHierarchy) => {
   if (torrentRequestAndAssociatedData.value) {
@@ -228,6 +217,10 @@ watch(() => route.params.id, fetchTorrentRequest, { immediate: true })
   margin: 0px 0.5em;
   color: white;
   cursor: pointer;
+}
+.icon-letter {
+  margin-left: -8px;
+  font-size: 0.8em;
 }
 .votes-table {
   margin-top: 20px;

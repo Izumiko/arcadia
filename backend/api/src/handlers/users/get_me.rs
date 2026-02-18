@@ -78,6 +78,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .pool
         .find_unread_notifications_amount_staff_pm_messages(current_user.id)
         .await?;
+    let unread_notifications_amount_torrent_request_comments = arc
+        .pool
+        .find_unread_notifications_amount_torrent_request_comments(current_user.id)
+        .await?;
     let unread_announcements_amount = arc
         .pool
         .find_unread_announcements_amount(current_user.id)
@@ -95,6 +99,8 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             unread_notifications_amount_title_group_comments as u32,
         unread_notifications_amount_staff_pm_messages: unread_notifications_amount_staff_pm_messages
             as u32,
+        unread_notifications_amount_torrent_request_comments:
+            unread_notifications_amount_torrent_request_comments as u32,
         last_five_uploaded_torrents: uploaded_torrents.results,
         last_five_snatched_torrents: snatched_torrents.results,
     }))

@@ -122,4 +122,44 @@ impl ConnectionPool {
         // TODO: check result.rows_affected()
         Ok(())
     }
+
+    pub async fn create_subscription_torrent_request_comments(
+        &self,
+        torrent_request_id: i64,
+        current_user_id: i32,
+    ) -> Result<()> {
+        sqlx::query!(
+            r#"
+                INSERT INTO subscriptions_torrent_request_comments (user_id, torrent_request_id)
+                VALUES ($1, $2)
+            "#,
+            current_user_id,
+            torrent_request_id
+        )
+        .execute(self.borrow())
+        .await
+        .map_err(Error::CouldNotCreateSubscription)?;
+
+        Ok(())
+    }
+
+    pub async fn delete_subscription_torrent_request_comments(
+        &self,
+        torrent_request_id: i64,
+        current_user_id: i32,
+    ) -> Result<()> {
+        let _ = sqlx::query!(
+            r#"
+                DELETE FROM subscriptions_torrent_request_comments
+                WHERE torrent_request_id = $1 AND user_id = $2;
+            "#,
+            torrent_request_id,
+            current_user_id
+        )
+        .execute(self.borrow())
+        .await?;
+
+        // TODO: check result.rows_affected()
+        Ok(())
+    }
 }

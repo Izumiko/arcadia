@@ -1113,6 +1113,10 @@ export interface GetNotificationsForTitleGroupComments200Response {
     'data': Array<NotificationTitleGroupComment>;
     'side_effects': Array<SideEffect>;
 }
+export interface GetNotificationsForTorrentRequestComments200Response {
+    'data': Array<NotificationTorrentRequestComment>;
+    'side_effects': Array<SideEffect>;
+}
 export interface GetPublicArcadiaSettings200Response {
     'data': PublicArcadiaSettings;
     'side_effects': Array<SideEffect>;
@@ -1395,6 +1399,14 @@ export interface NotificationTitleGroupComment {
     'title_group_comment_id': number;
     'title_group_id': number;
     'title_group_name': string;
+}
+export interface NotificationTorrentRequestComment {
+    'created_at': string;
+    'id': number;
+    'read_status': boolean;
+    'title_group_name': string;
+    'torrent_request_comment_id': number;
+    'torrent_request_id': number;
 }
 
 export const OrderByDirection = {
@@ -1724,6 +1736,7 @@ export interface Profile {
     'unread_notifications_amount_forum_thread_posts': number;
     'unread_notifications_amount_staff_pm_messages': number;
     'unread_notifications_amount_title_group_comments': number;
+    'unread_notifications_amount_torrent_request_comments': number;
     'user': User;
     'user_warnings': Array<UserWarning>;
 }
@@ -2579,6 +2592,7 @@ export interface TorrentRequestAndAssociatedData {
     'affiliated_artists': Array<AffiliatedArtistHierarchy>;
     'comments': Array<TorrentRequestCommentHierarchy>;
     'filled_by_user'?: UserLite | null;
+    'is_subscribed_to_comments': boolean;
     'series': SeriesLite;
     'title_group': TitleGroup;
     'torrent_request': TorrentRequest;
@@ -4297,6 +4311,19 @@ export const getNotificationsForTitleGroupComments = async (includeRead: boolean
 
 
 
+export const getNotificationsForTorrentRequestComments = async (includeRead: boolean, options?: RawAxiosRequestConfig): Promise<GetNotificationsForTorrentRequestComments200Response['data']> => {
+    const response = await globalAxios.request<GetNotificationsForTorrentRequestComments200Response>({
+        url: '/api/notifications/torrent-request-comments',
+        method: 'GET',
+        params: { 'include_read': includeRead },
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+
 export interface SearchArtistsRequest {
     'page': number;
     'page_size': number;
@@ -4885,6 +4912,19 @@ export const createTitleGroupTorrentsSubscription = async (titleGroupId: number,
 
 
 
+export const createTorrentRequestCommentsSubscription = async (torrentRequestId: number, options?: RawAxiosRequestConfig): Promise<void> => {
+    const response = await globalAxios.request<void>({
+        url: '/api/subscriptions/torrent-request-comments',
+        method: 'POST',
+        params: { 'torrent_request_id': torrentRequestId },
+        ...options
+    });
+    return response.data;
+};
+
+
+
+
 export const removeForumThreadPostsSubscription = async (threadId: number, options?: RawAxiosRequestConfig): Promise<void> => {
     const response = await globalAxios.request<void>({
         url: '/api/subscriptions/forum-thread-posts',
@@ -4916,6 +4956,19 @@ export const removeTitleGroupTorrentsSubscription = async (titleGroupId: number,
         url: '/api/subscriptions/title-group-torrents',
         method: 'DELETE',
         params: { 'title_group_id': titleGroupId },
+        ...options
+    });
+    return response.data;
+};
+
+
+
+
+export const removeTorrentRequestCommentsSubscription = async (torrentRequestId: number, options?: RawAxiosRequestConfig): Promise<void> => {
+    const response = await globalAxios.request<void>({
+        url: '/api/subscriptions/torrent-request-comments',
+        method: 'DELETE',
+        params: { 'torrent_request_id': torrentRequestId },
         ...options
     });
     return response.data;

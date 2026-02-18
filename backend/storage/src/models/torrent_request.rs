@@ -132,6 +132,7 @@ pub struct TorrentRequestAndAssociatedData {
     pub votes: Vec<TorrentRequestVoteHierarchy>,
     pub comments: Vec<TorrentRequestCommentHierarchy>,
     pub filled_by_user: Option<UserLite>,
+    pub is_subscribed_to_comments: bool,
 }
 
 impl TorrentRequest {

@@ -63,6 +63,9 @@ impl ConnectionPool {
             .create_torrent_request_vote(&torrent_request.initial_vote, user_id, vote_currencies)
             .await?;
 
+        self.create_subscription_torrent_request_comments(created_torrent_request.id, user_id)
+            .await?;
+
         Ok(created_torrent_request)
     }
 
@@ -571,7 +574,11 @@ impl ConnectionPool {
         })
     }
 
-    pub async fn find_torrent_request_hierarchy(&self, torrent_request_id: i64) -> Result<Value> {
+    pub async fn find_torrent_request_hierarchy(
+        &self,
+        torrent_request_id: i64,
+        current_user_id: i32,
+    ) -> Result<Value> {
         let result = sqlx::query!(
             r#"
         SELECT json_build_object(
@@ -668,13 +675,20 @@ impl ConnectionPool {
                         )
                         FROM users u3
                         WHERE u3.id = tr.filled_by_user_id
+                    ),
+                    'is_subscribed_to_comments', EXISTS(
+                        SELECT 1
+                        FROM subscriptions_torrent_request_comments strc
+                        WHERE strc.torrent_request_id = tr.id
+                        AND strc.user_id = $2
                     )
                 ) as data
                 FROM torrent_requests tr
                 JOIN title_groups tg ON tr.title_group_id = tg.id
                 WHERE tr.id = $1
         "#,
-            torrent_request_id
+            torrent_request_id,
+            current_user_id
         )
         .fetch_one(self.borrow())
         .await

@@ -2,6 +2,7 @@ use crate::{
     connection_pool::ConnectionPool, models::torrent_request_comment::TorrentRequestComment,
 };
 use arcadia_common::error::{Error, Result};
+use sqlx::{PgPool, Postgres, Transaction};
 use std::borrow::Borrow;
 
 impl ConnectionPool {
@@ -11,6 +12,10 @@ impl ConnectionPool {
         user_id: i32,
         content: &str,
     ) -> Result<TorrentRequestComment> {
+        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
+            .begin()
+            .await?;
+
         let created_torrent_request_comment = sqlx::query_as!(
             TorrentRequestComment,
             r#"
@@ -37,9 +42,19 @@ impl ConnectionPool {
             user_id,
             content
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&mut *tx)
         .await
         .map_err(Error::CouldNotCreateTorrentRequestComment)?;
+
+        Self::notify_users_torrent_request_comments(
+            &mut tx,
+            torrent_request_id,
+            created_torrent_request_comment.id,
+            user_id,
+        )
+        .await?;
+
+        tx.commit().await?;
 
         Ok(created_torrent_request_comment)
     }

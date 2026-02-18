@@ -28,6 +28,7 @@ const viewRoutes = computed<Record<string, string>>(() => ({
   conversation: '/conversations',
   forum_thread_post: '/notifications?tab=forum_thread_posts',
   title_group_comment: '/notifications?tab=title_group_comments',
+  torrent_request_comment: '/notifications?tab=torrent_request_comments',
   staff_pm: userStore.permissions.includes('read_staff_pm') ? '/staff-dashboard?tab=staffPms' : '/staff-pms',
 }))
 
@@ -37,9 +38,10 @@ watch(
     () => notificationsStore.unread_conversations_amount,
     () => notificationsStore.unread_notifications_amount_forum_thread_posts,
     () => notificationsStore.unread_notifications_amount_title_group_comments,
+    () => notificationsStore.unread_notifications_amount_torrent_request_comments,
     () => notificationsStore.unread_staff_pms_amount,
   ],
-  async ([newAnnouncements, newConversations, newForumThreadPosts, newTitleGroupComments, newStaffPms]) => {
+  async ([newAnnouncements, newConversations, newForumThreadPosts, newTitleGroupComments, newTorrentRequestComments, newStaffPms]) => {
     removeToastGroup('bottom-right')
     await nextTick()
 
@@ -57,6 +59,17 @@ watch(
 
     if (newTitleGroupComments > 0) {
       showToast('title_group_comment', t('user.unread_notifications_title_group_comments', [newTitleGroupComments]), 'info', undefined, false, 'bottom-right')
+    }
+
+    if (newTorrentRequestComments > 0) {
+      showToast(
+        'torrent_request_comment',
+        t('user.unread_notifications_torrent_request_comments', [newTorrentRequestComments]),
+        'info',
+        undefined,
+        false,
+        'bottom-right',
+      )
     }
 
     if (newStaffPms > 0) {

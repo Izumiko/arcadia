@@ -1131,6 +1131,26 @@ CREATE TABLE notifications_title_group_comments (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (title_group_comment_id) REFERENCES title_group_comments(id) ON DELETE CASCADE
 );
+-- notifies of new comments on a torrent request
+CREATE TABLE subscriptions_torrent_request_comments (
+    id BIGSERIAL PRIMARY KEY,
+    torrent_request_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (torrent_request_id) REFERENCES torrent_requests(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (torrent_request_id, user_id)
+);
+CREATE TABLE notifications_torrent_request_comments (
+    id BIGSERIAL PRIMARY KEY,
+    torrent_request_id BIGINT NOT NULL,
+    torrent_request_comment_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    read_status BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (torrent_request_comment_id) REFERENCES torrent_request_comments(id) ON DELETE CASCADE
+);
 CREATE TABLE notifications_staff_pm_messages (
     id BIGSERIAL PRIMARY KEY,
     staff_pm_id BIGINT NOT NULL,

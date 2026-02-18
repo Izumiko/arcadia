@@ -26,6 +26,17 @@ pub struct NotificationTitleGroupComment {
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
+pub struct NotificationTorrentRequestComment {
+    pub id: i64,
+    pub torrent_request_comment_id: i64,
+    pub torrent_request_id: i64,
+    pub title_group_name: String,
+    #[schema(value_type = String, format = DateTime)]
+    pub created_at: DateTime<Utc>,
+    pub read_status: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
 pub struct NotificationStaffPmMessage {
     pub id: i64,
     pub staff_pm_message_id: i64,

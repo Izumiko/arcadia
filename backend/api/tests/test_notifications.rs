@@ -8,9 +8,11 @@ use arcadia_storage::models::{
     forum::{ForumPost, UserCreatedForumPost},
     notification::{
         NotificationForumThreadPost, NotificationStaffPmMessage, NotificationTitleGroupComment,
+        NotificationTorrentRequestComment,
     },
     staff_pm::{StaffPm, StaffPmMessage, UserCreatedStaffPm, UserCreatedStaffPmMessage},
     title_group_comment::{TitleGroupComment, UserCreatedTitleGroupComment},
+    torrent_request_comment::TorrentRequestComment,
     user::Profile,
 };
 use common::{auth_header, create_test_app, create_test_app_and_login, TestUser};
@@ -835,6 +837,181 @@ async fn test_notifications_marked_as_read_when_staff_pm_resolved(pool: PgPool) 
         common::call_and_read_body_json(&service_b, notif_req).await;
     assert_eq!(notifications.len(), 1);
     assert!(notifications[0].read_status);
+}
+
+// Torrent Request Comment Notifications
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_torrent_request"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_subscriber_receives_notification_on_new_torrent_request_comment(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+
+    // User A (Standard) will create comments
+    let (service, user_a) =
+        create_test_app_and_login(pool.clone(), MockRedisPool::default(), TestUser::Standard).await;
+
+    // User B (EditTitleGroupComment) will subscribe and receive notifications
+    let mock_redis = MockRedisPool::default();
+    let service_b = create_test_app(pool.clone(), mock_redis).await;
+    let login_req = test::TestRequest::post()
+        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .uri("/api/auth/login")
+        .set_json(serde_json::json!({
+            "username": "user_edit_tgc",
+            "password": "test_password",
+            "remember_me": true
+        }))
+        .to_request();
+    let user_b: arcadia_storage::models::user::LoginResponse =
+        common::call_and_read_body_json(&service_b, login_req).await;
+
+    // User B subscribes to torrent request 1
+    let sub_req = test::TestRequest::post()
+        .uri("/api/subscriptions/torrent-request-comments?torrent_request_id=1")
+        .insert_header(auth_header(&user_b.token))
+        .to_request();
+    let resp = test::call_service(&service_b, sub_req).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+
+    // User A creates a comment on torrent request 1
+    let req = test::TestRequest::post()
+        .uri("/api/torrent-requests/comment")
+        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .insert_header(auth_header(&user_a.token))
+        .set_json(serde_json::json!({
+            "torrent_request_id": 1,
+            "content": "Test comment for notification"
+        }))
+        .to_request();
+    let _comment: TorrentRequestComment =
+        common::call_and_read_body_json_with_status(&service, req, StatusCode::CREATED).await;
+
+    // User B checks notifications
+    let notif_req = test::TestRequest::get()
+        .uri("/api/notifications/torrent-request-comments?include_read=false")
+        .insert_header(auth_header(&user_b.token))
+        .to_request();
+    let notifications: Vec<NotificationTorrentRequestComment> =
+        common::call_and_read_body_json(&service_b, notif_req).await;
+
+    assert_eq!(notifications.len(), 1);
+    assert_eq!(notifications[0].torrent_request_id, 1);
+    assert!(!notifications[0].read_status);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_torrent_request"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_comment_creator_does_not_receive_own_torrent_request_notification(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+
+    let (service, user) =
+        create_test_app_and_login(pool.clone(), MockRedisPool::default(), TestUser::Standard).await;
+
+    // User subscribes to torrent request 1
+    let sub_req = test::TestRequest::post()
+        .uri("/api/subscriptions/torrent-request-comments?torrent_request_id=1")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    let resp = test::call_service(&service, sub_req).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+
+    // Same user creates a comment
+    let req = test::TestRequest::post()
+        .uri("/api/torrent-requests/comment")
+        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .insert_header(auth_header(&user.token))
+        .set_json(serde_json::json!({
+            "torrent_request_id": 1,
+            "content": "My own comment"
+        }))
+        .to_request();
+    let _comment: TorrentRequestComment =
+        common::call_and_read_body_json_with_status(&service, req, StatusCode::CREATED).await;
+
+    // User should NOT receive notification for their own comment
+    let notif_req = test::TestRequest::get()
+        .uri("/api/notifications/torrent-request-comments?include_read=false")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    let notifications: Vec<NotificationTorrentRequestComment> =
+        common::call_and_read_body_json(&service, notif_req).await;
+
+    assert_eq!(notifications.len(), 0);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_torrent_request"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_no_duplicate_unread_torrent_request_notifications(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+
+    // User A creates comments
+    let (service, user_a) =
+        create_test_app_and_login(pool.clone(), MockRedisPool::default(), TestUser::Standard).await;
+
+    // User B subscribes
+    let mock_redis = MockRedisPool::default();
+    let service_b = create_test_app(pool.clone(), mock_redis).await;
+    let login_req = test::TestRequest::post()
+        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .uri("/api/auth/login")
+        .set_json(serde_json::json!({
+            "username": "user_edit_tgc",
+            "password": "test_password",
+            "remember_me": true
+        }))
+        .to_request();
+    let user_b: arcadia_storage::models::user::LoginResponse =
+        common::call_and_read_body_json(&service_b, login_req).await;
+
+    let sub_req = test::TestRequest::post()
+        .uri("/api/subscriptions/torrent-request-comments?torrent_request_id=1")
+        .insert_header(auth_header(&user_b.token))
+        .to_request();
+    let resp = test::call_service(&service_b, sub_req).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+
+    // User A creates two comments
+    for i in 1..=2 {
+        let req = test::TestRequest::post()
+            .uri("/api/torrent-requests/comment")
+            .insert_header(("X-Forwarded-For", "10.10.4.88"))
+            .insert_header(auth_header(&user_a.token))
+            .set_json(serde_json::json!({
+                "torrent_request_id": 1,
+                "content": format!("Comment {}", i)
+            }))
+            .to_request();
+        let _: TorrentRequestComment =
+            common::call_and_read_body_json_with_status(&service, req, StatusCode::CREATED).await;
+    }
+
+    // User B should only have 1 unread notification (no duplicates)
+    let notif_req = test::TestRequest::get()
+        .uri("/api/notifications/torrent-request-comments?include_read=false")
+        .insert_header(auth_header(&user_b.token))
+        .to_request();
+    let notifications: Vec<NotificationTorrentRequestComment> =
+        common::call_and_read_body_json(&service_b, notif_req).await;
+
+    assert_eq!(notifications.len(), 1);
 }
 
 // Unread Announcements

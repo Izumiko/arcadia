@@ -1,4 +1,4 @@
-use crate::Arcadia;
+use crate::{middlewares::auth_middleware::Authdata, Arcadia};
 use actix_web::{
     web::{Data, Query},
     HttpResponse,
@@ -31,8 +31,12 @@ pub struct GetTorrentRequestQuery {
 pub async fn exec<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
     query: Query<GetTorrentRequestQuery>,
+    user: Authdata,
 ) -> Result<HttpResponse> {
-    let torrent_request = arc.pool.find_torrent_request_hierarchy(query.id).await?;
+    let torrent_request = arc
+        .pool
+        .find_torrent_request_hierarchy(query.id, user.sub)
+        .await?;
 
     Ok(HttpResponse::Ok().json(torrent_request))
 }
