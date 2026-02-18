@@ -26,23 +26,23 @@
       <div class="overview-grid">
         <ContentContainer class="overview-item">
           <div class="label">{{ bpAlias }}/{{ t('shop.hour') }}</div>
-          <div class="value">{{ formatBp(overview.bonus_points_per_day / 24) }}</div>
+          <div class="value">{{ formatBpOverview(overview.bonus_points_per_day / 24) }}</div>
         </ContentContainer>
         <ContentContainer class="overview-item">
           <div class="label">{{ bpAlias }}/{{ t('shop.day') }}</div>
-          <div class="value">{{ formatBp(overview.bonus_points_per_day) }}</div>
+          <div class="value">{{ formatBpOverview(overview.bonus_points_per_day) }}</div>
         </ContentContainer>
         <ContentContainer class="overview-item">
           <div class="label">{{ bpAlias }}/{{ t('shop.week') }}</div>
-          <div class="value">{{ formatBp(overview.bonus_points_per_day * 7) }}</div>
+          <div class="value">{{ formatBpOverview(overview.bonus_points_per_day * 7) }}</div>
         </ContentContainer>
         <ContentContainer class="overview-item">
           <div class="label">{{ bpAlias }}/{{ t('shop.month') }}</div>
-          <div class="value">{{ formatBp(overview.bonus_points_per_day * 28) }}</div>
+          <div class="value">{{ formatBpOverview(overview.bonus_points_per_day * 28) }}</div>
         </ContentContainer>
         <ContentContainer class="overview-item">
           <div class="label">{{ bpAlias }}/{{ t('shop.year') }}</div>
-          <div class="value">{{ formatBp(overview.bonus_points_per_day * 365) }}</div>
+          <div class="value">{{ formatBpOverview(overview.bonus_points_per_day * 365) }}</div>
         </ContentContainer>
       </div>
     </div>
@@ -206,6 +206,8 @@ const seedersOptions = [
 ]
 
 const formatBp = (value: number) => formatBpShared(value, publicArcadiaSettings.bonus_points_decimal_places, true)
+// show up to 2 decimal places for simplicity
+const formatBpOverview = (value: number) => formatBpShared(value, Math.min(publicArcadiaSettings.bonus_points_decimal_places, 2), true)
 
 const formatSeedTime = (seconds: number) => {
   const days = Math.floor(seconds / 86400)
