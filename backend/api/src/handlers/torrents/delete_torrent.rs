@@ -2,6 +2,8 @@ use actix_web::{
     web::{Data, Json},
     HttpRequest, HttpResponse,
 };
+use log::debug;
+use reqwest::Client;
 use serde_json::json;
 
 use crate::{middlewares::auth_middleware::Authdata, Arcadia};
@@ -50,8 +52,30 @@ Handled by: [url={}]{}[/url]",
         current_user.username
     );
 
+    let torrent_id = form.id;
+
     form.displayed_reason = Some(displayed_reason);
     arc.pool.remove_torrent(&form, user.sub).await?;
+
+    let client = Client::new();
+
+    let mut url = arc.env.tracker.url_internal.clone();
+    url.path_segments_mut()
+        .unwrap()
+        .push("api")
+        .push("torrents")
+        .push(&torrent_id.to_string());
+
+    let res = client
+        .delete(url)
+        .header("x-api-key", arc.env.tracker.api_key.clone())
+        .send()
+        .await;
+
+    debug!(
+        "Tried to mark torrent as deleted in tracker and got: {:?}",
+        res
+    );
 
     Ok(HttpResponse::Ok().json(json!({"result": "success"})))
 }

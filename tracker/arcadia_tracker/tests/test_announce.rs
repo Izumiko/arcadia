@@ -3,7 +3,7 @@ mod common;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use actix_web::test;
-use common::read_body_bencode;
+use common::{create_test_app, read_body_bencode};
 use serde::Deserialize;
 use sqlx::PgPool;
 
@@ -1058,4 +1058,53 @@ async fn test_bonus_points_transfer_to_none(pool: PgPool) {
         .await
         .unwrap();
     assert_eq!(uploader_row.0, uploader_initial_bp);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_user",
+        "with_test_title_group",
+        "with_test_edition_group",
+        "with_test_torrent"
+    ),
+    migrations = "../../backend/storage/migrations"
+)]
+async fn test_delete_torrent_rejects_announce(pool: PgPool) {
+    let service = create_test_app(pool).await;
+
+    let valid_passkey = "d2037c66dd3e13044e0d2f9b891c3837";
+    let info_hash_bytes = [
+        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
+        0x00, 0x11, 0x22, 0x33, 0x44,
+    ];
+    let info_hash_encoded = url_encode_info_hash(&info_hash_bytes);
+    let peer_id = test_peer_id();
+    let peer_id_encoded =
+        percent_encoding::percent_encode(&peer_id, percent_encoding::NON_ALPHANUMERIC).to_string();
+
+    // Delete the torrent via the tracker API
+    let req = test::TestRequest::delete()
+        .uri("/api/torrents/1")
+        .insert_header(("x-api-key", "amazing_api_key"))
+        .to_request();
+
+    let resp = test::call_service(&service, req).await;
+    assert!(resp.status().is_success(), "Delete should succeed");
+
+    // Announce on the deleted torrent should fail
+    let req = test::TestRequest::get()
+        .uri(&format!(
+            "/{}/announce?info_hash={}&peer_id={}&port=6969&uploaded=0&downloaded=0&left=1000&event=started",
+            valid_passkey, info_hash_encoded, peer_id_encoded
+        ))
+        .insert_header(("User-Agent", "test-agent/1.0"))
+        .peer_addr(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0))
+        .to_request();
+
+    let resp = test::call_service(&service, req).await;
+
+    let error: WrappedError = read_body_bencode(resp)
+        .await
+        .expect("Failed to decode error response");
+    assert_eq!(error.failure_reason, "Torrent has been deleted.");
 }

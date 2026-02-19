@@ -1,10 +1,10 @@
-use actix_web::web::{self, put, resource, scope};
+use actix_web::web::{self, delete, put, resource, scope};
 
 use crate::{
     announce::handlers::announce::config as AnnouncesConfig,
     handlers::{
         settings::update_settings,
-        torrents::{update_torrent_factors, upsert_torrent},
+        torrents::{delete_torrent, update_torrent_factors, upsert_torrent},
         users::{update_user_max_snatches_per_day, upsert_user},
     },
     middleware::authenticate_backend,
@@ -17,6 +17,7 @@ pub fn init(cfg: &mut web::ServiceConfig) {
         web::scope("/api")
             .wrap(HttpAuthentication::with_fn(authenticate_backend))
             .service(resource("/torrents").route(put().to(upsert_torrent::exec)))
+            .service(resource("/torrents/{id}").route(delete().to(delete_torrent::exec)))
             .service(
                 resource("/torrents/{id}/up-down-factors")
                     .route(put().to(update_torrent_factors::exec)),
