@@ -207,7 +207,8 @@ const seedersOptions = [
 
 const formatBp = (value: number) => formatBpShared(value, publicArcadiaSettings.bonus_points_decimal_places, true)
 // show up to 2 decimal places for simplicity
-const formatBpOverview = (value: number) => formatBpShared(value, Math.min(publicArcadiaSettings.bonus_points_decimal_places, 2), true)
+const formatBpOverview = (value: number) =>
+  formatBpShared(value, publicArcadiaSettings.bonus_points_decimal_places, true, Math.min(publicArcadiaSettings.bonus_points_decimal_places, 2))
 
 const formatSeedTime = (seconds: number) => {
   const days = Math.floor(seconds / 86400)

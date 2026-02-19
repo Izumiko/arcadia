@@ -416,12 +416,13 @@ export const formatDateToLocalString = (date: Date): string => {
   return `${year}-${month}-${day}`
 }
 
-export const formatBp = (rawValue: number, decimalPlaces: number, showDecimals = false): string => {
+export const formatBp = (rawValue: number, decimalPlaces: number, showDecimals = false, displayDecimalPlaces?: number): string => {
   const shifted = rawValue / Math.pow(10, decimalPlaces)
+  const display = displayDecimalPlaces ?? decimalPlaces
   const truncated = showDecimals ? shifted : Math.trunc(shifted)
   return truncated.toLocaleString(undefined, {
-    minimumFractionDigits: showDecimals ? decimalPlaces : 0,
-    maximumFractionDigits: showDecimals ? decimalPlaces : 0,
+    minimumFractionDigits: showDecimals ? display : 0,
+    maximumFractionDigits: showDecimals ? display : 0,
   })
 }
 
