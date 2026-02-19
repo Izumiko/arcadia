@@ -157,7 +157,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             {
                 return Ok(response);
             }
-            title_group = Some(get_musicbrainz_release_group_data(&id, &client).await?);
+            let mut tg = get_musicbrainz_release_group_data(&id, &client).await?;
+            crate::services::image_host_service::rehost_image_urls(&arc.image_host, &mut tg.covers)
+                .await;
+            title_group = Some(tg);
         }
         MusicBrainzResourceType::Release => {
             let (eg, release_group_id) = get_musicbrainz_release_data(&id, &client).await?;
@@ -171,7 +174,13 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
                 {
                     return Ok(response);
                 }
-                title_group = Some(get_musicbrainz_release_group_data(&rgid, &client).await?);
+                let mut tg = get_musicbrainz_release_group_data(&rgid, &client).await?;
+                crate::services::image_host_service::rehost_image_urls(
+                    &arc.image_host,
+                    &mut tg.covers,
+                )
+                .await;
+                title_group = Some(tg);
             }
         }
     };

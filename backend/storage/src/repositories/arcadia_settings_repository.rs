@@ -47,7 +47,8 @@ impl ConnectionPool {
                     default_user_uploaded_on_registration,
                     default_user_downloaded_on_registration,
                     default_user_bonus_points_on_registration,
-                    default_user_freeleech_tokens_on_registration
+                    default_user_freeleech_tokens_on_registration,
+                    display_image_host_drag_and_drop
                 FROM arcadia_settings
                 LIMIT 1
             "#,
@@ -99,7 +100,8 @@ impl ConnectionPool {
                     default_user_uploaded_on_registration = $30,
                     default_user_downloaded_on_registration = $31,
                     default_user_bonus_points_on_registration = $32,
-                    default_user_freeleech_tokens_on_registration = $33
+                    default_user_freeleech_tokens_on_registration = $33,
+                    display_image_host_drag_and_drop = $34
                 RETURNING
                     user_class_name_on_signup,
                     default_css_sheet_name,
@@ -133,7 +135,8 @@ impl ConnectionPool {
                     default_user_uploaded_on_registration,
                     default_user_downloaded_on_registration,
                     default_user_bonus_points_on_registration,
-                    default_user_freeleech_tokens_on_registration
+                    default_user_freeleech_tokens_on_registration,
+                    display_image_host_drag_and_drop
             "#,
             settings.user_class_name_on_signup,
             settings.default_css_sheet_name,
@@ -169,7 +172,8 @@ impl ConnectionPool {
             settings.default_user_uploaded_on_registration,
             settings.default_user_downloaded_on_registration,
             settings.default_user_bonus_points_on_registration,
-            settings.default_user_freeleech_tokens_on_registration
+            settings.default_user_freeleech_tokens_on_registration,
+            settings.display_image_host_drag_and_drop
         )
         .fetch_one(self.borrow())
         .await

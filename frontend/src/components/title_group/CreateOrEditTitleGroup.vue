@@ -178,6 +178,7 @@
       </div>
       <div class="covers input-list">
         <label>{{ t('general.cover', 2) }}</label>
+        <ImageUploader v-if="publicArcadiaSettings.display_image_host_drag_and_drop" @uploaded="(url) => onImageUploaded(titleGroupForm.covers, url)" />
         <div v-for="(_link, index) in titleGroupForm.covers" :key="index">
           <InputText size="small" v-model="titleGroupForm.covers[index]" />
           <Button v-if="index == 0" @click="addCover" icon="pi pi-plus" size="small" />
@@ -189,6 +190,7 @@
       </div>
       <div class="screenshots input-list" v-if="titleGroupForm.content_type == 'software'">
         <label>{{ t('general.screenshots') }}</label>
+        <ImageUploader v-if="publicArcadiaSettings.display_image_host_drag_and_drop" @uploaded="(url) => onImageUploaded(titleGroupForm.screenshots, url)" />
         <div v-for="(_link, index) in titleGroupForm.screenshots" :key="index">
           <InputText size="small" v-model="titleGroupForm.screenshots[index]" />
           <Button v-if="index == 0" @click="addScreenshot" icon="pi pi-plus" size="small" />
@@ -247,6 +249,7 @@ import {
   parseDateStringToLocal,
 } from '@/services/helpers'
 import { useTitleGroupStore } from '@/stores/titleGroup'
+import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import type { VNodeRef } from 'vue'
 import EditAffiliatedArtists from '../artist/EditAffiliatedArtists.vue'
 import { onMounted } from 'vue'
@@ -267,6 +270,7 @@ import {
   type UserCreatedTitleGroup,
 } from '@/services/api-schema'
 import BBCodeEditor from '../community/BBCodeEditor.vue'
+import ImageUploader from '../ImageUploader.vue'
 
 const props = defineProps<{
   initialTitleGroup?: EditedTitleGroup | UserCreatedTitleGroupForm
@@ -274,6 +278,7 @@ const props = defineProps<{
   editMode?: boolean
 }>()
 const titleGroupStore = ref(useTitleGroupStore())
+const publicArcadiaSettings = usePublicArcadiaSettingsStore()
 
 const sendingTitleGroup = ref(false)
 
@@ -548,6 +553,13 @@ const addEmbeddedLink = () => {
 }
 const removeEmbeddedLink = (index: number) => {
   titleGroupForm.value.trailers.splice(index, 1)
+}
+const onImageUploaded = (urls: string[], url: string) => {
+  if (urls.length === 1 && urls[0] === '') {
+    urls[0] = url
+  } else {
+    urls.push(url)
+  }
 }
 
 // const updateTitleGroupForm = (form: Partial<UserCreatedTitleGroupForm>) => {

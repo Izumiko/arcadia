@@ -72,6 +72,17 @@
         <label>{{ t('arcadia_settings.approved_image_hosts') }} {{ t('arcadia_settings.approved_image_hosts_hint') }}</label>
       </FloatLabel>
 
+      <div style="margin-top: 10px; margin-bottom: 10px">
+        <Checkbox
+          v-model="settings.display_image_host_drag_and_drop"
+          name="display_image_host_drag_and_drop"
+          :binary="true"
+          inputId="display_image_host_drag_and_drop"
+          style="margin-right: 5px"
+        />
+        <label for="display_image_host_drag_and_drop">{{ t('arcadia_settings.display_image_host_drag_and_drop') }}</label>
+      </div>
+
       <FloatLabel>
         <MultiSelect
           v-model="settings.displayed_top_bar_stats"

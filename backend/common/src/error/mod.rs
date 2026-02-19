@@ -503,6 +503,12 @@ pub enum Error {
     #[error("image host not approved: {0}")]
     ImageHostNotApproved(String),
 
+    #[error("image host not configured")]
+    ImageHostNotConfigured,
+
+    #[error("image host upload failed: {0}")]
+    ImageHostUploadFailed(String),
+
     #[error("could not create shop purchase")]
     CouldNotCreateShopPurchase(#[source] sqlx::Error),
 
@@ -540,6 +546,7 @@ impl actix_web::ResponseError for Error {
             | Error::TitleGroupHasUndeletedTorrents
             | Error::InvalidUserClassName
             | Error::ImageHostNotApproved(_)
+            | Error::ImageHostNotConfigured
             | Error::ContentReleasedAfterCutoff(_)
             | Error::VoteBountyRequired => StatusCode::BAD_REQUEST,
 

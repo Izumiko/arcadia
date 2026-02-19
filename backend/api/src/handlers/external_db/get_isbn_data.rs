@@ -167,19 +167,23 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         )
         .await?;
 
+    let mut covers = if let Some(cover_id) = book.cover_ids.unwrap_or(vec![]).first() {
+        vec![format!(
+            "https://covers.openlibrary.org/b/id/{}-L.jpg",
+            cover_id
+        )]
+    } else {
+        vec![]
+    };
+
+    crate::services::image_host_service::rehost_image_urls(&arc.image_host, &mut covers).await;
+
     let title_group = UserCreatedTitleGroup {
         name: work.title,
         description,
         external_links: vec![work_group_url],
         original_release_date,
-        covers: if let Some(cover_id) = book.cover_ids.unwrap_or(vec![]).first() {
-            vec![format!(
-                "https://covers.openlibrary.org/b/id/{}-L.jpg",
-                cover_id
-            )]
-        } else {
-            vec![]
-        },
+        covers,
         content_type: ContentType::Book,
         affiliated_artists: artists
             .iter()

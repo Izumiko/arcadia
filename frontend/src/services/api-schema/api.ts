@@ -67,6 +67,7 @@ export interface ArcadiaSettings {
     'default_user_downloaded_on_registration': number;
     'default_user_freeleech_tokens_on_registration': number;
     'default_user_uploaded_on_registration': number;
+    'display_image_host_drag_and_drop': boolean;
     'displayable_user_stats': Array<DisplayableUserStats>;
     'displayed_top_bar_stats': Array<DisplayedTopBarStats>;
     'global_download_factor': number;
@@ -1748,6 +1749,7 @@ export interface PromotionPricing {
 export interface PublicArcadiaSettings {
     'bonus_points_alias': string;
     'bonus_points_decimal_places': number;
+    'display_image_host_drag_and_drop': boolean;
     'displayable_user_stats': Array<DisplayableUserStats>;
     'displayed_top_bar_stats': Array<DisplayedTopBarStats>;
     'emails_enabled': boolean;
@@ -2783,6 +2785,16 @@ export interface UpdatedUserPermissions {
 export interface UploadDiscountTier {
     'discount_percent': number;
     'threshold_gb': number;
+}
+export interface UploadImage200Response {
+    'data': UploadImageResponse;
+    'side_effects': Array<SideEffect>;
+}
+export interface UploadImageForm {
+    'image': File;
+}
+export interface UploadImageResponse {
+    'url': string;
 }
 export interface UploadInformation {
     'allow_uploader_set_torrent_bonus_points_cost': boolean;
@@ -4220,6 +4232,19 @@ export const getHomeData = async (options?: RawAxiosRequestConfig): Promise<GetH
     });
     return response.data.data;
 };
+
+
+
+export const uploadImage = async (image: File, options?: RawAxiosRequestConfig): Promise<UploadImage200Response['data']> => {
+    const response = await globalAxios.request<UploadImage200Response>({
+        url: '/api/image-host/upload',
+        method: 'POST',
+        ...options
+    });
+    return response.data.data;
+};
+
+
 
 
 

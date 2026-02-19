@@ -43,6 +43,7 @@ use arcadia_storage::models::shop::{
 use arcadia_storage::models::unauthorized_access::SearchUnauthorizedAccessQuery;
 use arcadia_storage::models::user_edit_change_log::SearchUserEditChangeLogsQuery;
 
+use crate::handlers::image_host::upload_image::{UploadImageForm, UploadImageResponse};
 use crate::handlers::search::search_title_group_tags_lite::SearchTitleGroupTagsLiteQuery;
 use crate::handlers::user_applications::get_user_applications::GetUserApplicationsQuery;
 use crate::handlers::users::get_user_torrent_activities_overview::SeedersPerTorrent;
@@ -227,6 +228,7 @@ use arcadia_storage::models::user_application::UserApplicationHierarchy;
         crate::handlers::user_classes::delete_user_class::exec,
         crate::handlers::user_classes::get_user_classes::exec,
         crate::handlers::stats::get_torrent_stats::exec,
+        crate::handlers::image_host::upload_image::exec,
     ),
     components(schemas(
         GetUserApplicationsQuery,
@@ -284,6 +286,8 @@ use arcadia_storage::models::user_application::UserApplicationHierarchy;
         TorrentStatsDataPoint,
         StatsInterval,
         TorrentStatsGroupBy,
+        UploadImageForm,
+        UploadImageResponse,
     ),)
 )]
 pub struct ApiDoc;

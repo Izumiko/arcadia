@@ -105,6 +105,7 @@ pub struct ArcadiaSettings {
     pub default_user_downloaded_on_registration: i64,
     pub default_user_bonus_points_on_registration: i64,
     pub default_user_freeleech_tokens_on_registration: i32,
+    pub display_image_host_drag_and_drop: bool,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
@@ -138,4 +139,5 @@ pub struct PublicArcadiaSettings {
     pub displayable_user_stats: Vec<DisplayableUserStats>,
     pub torrent_request_vote_currencies: Vec<TorrentRequestVoteCurrency>,
     pub emails_enabled: bool,
+    pub display_image_host_drag_and_drop: bool,
 }

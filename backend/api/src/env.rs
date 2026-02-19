@@ -21,6 +21,8 @@ pub struct Env {
     pub redis: RedisConfig,
     #[envconfig(from = "TMDB_API_KEY")]
     pub tmdb_api_key: Option<String>,
+    #[envconfig(nested)]
+    pub image_host: ImageHostConfig,
     #[envconfig(from = "BONUS_POINTS_FORMULA")]
     pub bonus_points_formula: String,
     #[envconfig(from = "TASK_INTERVAL_SEEDTIME_AND_BONUS_POINTS_UPDATE_SECONDS")]
@@ -81,4 +83,14 @@ pub struct SmtpConfig {
     // set in the smtp initializer. if it fails, leave it false, otherwise true
     #[envconfig(default = "false")]
     pub emails_enabled: bool,
+}
+
+#[derive(Envconfig, Clone)]
+pub struct ImageHostConfig {
+    #[envconfig(from = "CHEVERETO_API_URL")]
+    pub chevereto_api_url: Option<String>,
+    #[envconfig(from = "CHEVERETO_API_KEY")]
+    pub chevereto_api_key: Option<String>,
+    #[envconfig(from = "REHOST_EXTERNAL_IMAGES", default = "false")]
+    pub rehost_external_images: bool,
 }

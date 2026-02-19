@@ -156,7 +156,7 @@
   </Form>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, nextTick } from 'vue'
 import FloatLabel from 'primevue/floatlabel'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
@@ -282,20 +282,15 @@ const onFormSubmit = ({ valid }: FormSubmitEvent) => {
 //   editionGroupForm.value.external_links.splice(index, 1)
 // }
 //
-const updateEditionGroupForm = async (form: UserCreatedEditionGroup) => {
-  // form.release_date = form.release_date.split('T')[0]
+const updateEditionGroupForm = (form: UserCreatedEditionGroup) => {
   editionGroupForm.value = {
     ...editionGroupForm.value,
     ...form,
   }
-  // some field is apparently undefined, the whole form seems to still get populated though
-  try {
-    // the release_date needs to be set manually otherwise another field fails before (I guess) and it's not set
+  nextTick().then(() => {
     formRef.value?.setFieldValue('release_date', editionGroupForm.value.release_date)
     formRef.value?.setFieldValue('source', editionGroupForm.value.source)
-  } catch {
-    // console.log(e)
-  }
+  })
 }
 
 defineExpose({
@@ -312,9 +307,10 @@ onMounted(() => {
   } else if (titleGroup.original_release_date) {
     editionGroupForm.value.release_date_only_year_known = titleGroup.original_release_date_only_year_known
     editionGroupForm.value.release_date = titleGroup.original_release_date
-    formRef.value?.setFieldValue('release_date', titleGroup.original_release_date)
     release_year.value = parseInt(titleGroup.original_release_date.substring(0, 4), 10)
-    formRef.value?.setFieldValue('release_year', release_year.value)
+    nextTick().then(() => {
+      formRef.value?.setFieldValue('release_date', titleGroup.original_release_date!)
+    })
   }
 })
 </script>

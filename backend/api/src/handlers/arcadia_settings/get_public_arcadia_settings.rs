@@ -28,5 +28,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Res
         displayable_user_stats: settings.displayable_user_stats,
         torrent_request_vote_currencies: settings.torrent_request_vote_currencies,
         emails_enabled: arc.env.smtp.emails_enabled,
+        display_image_host_drag_and_drop: settings.display_image_host_drag_and_drop,
     }))
 }

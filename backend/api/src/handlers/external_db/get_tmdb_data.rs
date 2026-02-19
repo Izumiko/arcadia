@@ -245,6 +245,35 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     if let Some(title_group) = &mut external_db_data.title_group {
         title_group.external_links.push(query.url.clone());
+        crate::services::image_host_service::rehost_image_urls(
+            &arc.image_host,
+            &mut title_group.covers,
+        )
+        .await;
+    }
+
+    // Rehost artist images in the background to avoid blocking the response
+    if arc.image_host.rehost_external_images {
+        let image_host_config = arc.image_host.clone();
+        let pool = arc.pool.clone();
+        let artists: Vec<_> = external_db_data
+            .affiliated_artists
+            .iter()
+            .map(|a| (a.artist.id, a.artist.pictures.clone()))
+            .collect();
+
+        tokio::spawn(async move {
+            for (artist_id, mut pictures) in artists {
+                crate::services::image_host_service::rehost_image_urls(
+                    &image_host_config,
+                    &mut pictures,
+                )
+                .await;
+                if let Err(e) = pool.update_artist_pictures(artist_id, &pictures).await {
+                    log::warn!("Failed to update rehosted pictures for artist {artist_id}: {e}");
+                }
+            }
+        });
     }
 
     Ok(HttpResponse::Ok().json(external_db_data))

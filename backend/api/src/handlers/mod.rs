@@ -11,6 +11,7 @@ pub mod external_db;
 pub mod forum;
 pub mod gifts;
 pub mod home;
+pub mod image_host;
 pub mod invitations;
 pub mod master_groups;
 pub mod notifications;

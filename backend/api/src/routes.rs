@@ -17,6 +17,7 @@ use crate::handlers::external_db::config as ExternalDbConfig;
 use crate::handlers::forum::config as ForumConfig;
 use crate::handlers::gifts::config as GiftsConfig;
 use crate::handlers::home::config as HomeConfig;
+use crate::handlers::image_host::config as ImageHostConfig;
 use crate::handlers::invitations::config as InvitationsConfig;
 use crate::handlers::master_groups::config as MasterGroupsConfig;
 use crate::handlers::notifications::config as NotificationsConfig;
@@ -71,6 +72,7 @@ pub fn init<R: RedisPoolInterface + 'static>(cfg: &mut web::ServiceConfig) {
             .service(scope("/staff-pms").configure(StaffPmsConfig::<R>))
             .service(scope("/invitations").configure(InvitationsConfig::<R>))
             .service(scope("/home").configure(HomeConfig::<R>))
+            .service(scope("/image-host").configure(ImageHostConfig::<R>))
             .service(scope("/master-groups").configure(MasterGroupsConfig::<R>))
             .service(scope("/gifts").configure(GiftsConfig::<R>))
             .service(scope("/shop").configure(ShopConfig::<R>))

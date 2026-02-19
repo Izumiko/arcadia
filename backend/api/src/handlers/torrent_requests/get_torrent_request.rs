@@ -38,5 +38,11 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .find_torrent_request_hierarchy(query.id, user.sub)
         .await?;
 
+    // Mark any torrent request comment notifications as read for this user
+    let _ = arc
+        .pool
+        .mark_notification_torrent_request_comment_as_read(query.id, user.sub)
+        .await;
+
     Ok(HttpResponse::Ok().json(torrent_request))
 }

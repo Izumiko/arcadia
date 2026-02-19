@@ -448,6 +448,7 @@ dependencies = [
  "arcadia-shared",
  "arcadia-storage",
  "argon2",
+ "base64",
  "bip_metainfo",
  "bytes",
  "chrono 0.4.41",

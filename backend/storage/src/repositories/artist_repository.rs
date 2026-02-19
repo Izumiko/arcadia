@@ -304,6 +304,18 @@ impl ConnectionPool {
         .map_err(Error::CouldNotUpdateArtist)
     }
 
+    pub async fn update_artist_pictures(&self, artist_id: i64, pictures: &[String]) -> Result<()> {
+        sqlx::query!(
+            r#"UPDATE artists SET pictures = $1 WHERE id = $2"#,
+            pictures,
+            artist_id
+        )
+        .execute(self.borrow())
+        .await
+        .map_err(Error::CouldNotUpdateArtist)?;
+        Ok(())
+    }
+
     pub async fn delete_artists_affiliation(&self, affiliation_ids: &Vec<i64>) -> Result<()> {
         // Get artist_id for affiliations being deleted
         let affected_affiliations: Vec<(i64,)> = sqlx::query_as(

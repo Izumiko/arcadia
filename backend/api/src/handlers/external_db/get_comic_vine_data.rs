@@ -195,7 +195,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     let mut title_group: Option<UserCreatedTitleGroup> = None;
     match entity_type {
         ComicVineResourceType::Issue => {
-            title_group = Some(get_comic_vine_issue_data(&id, &client).await?);
+            let mut tg = get_comic_vine_issue_data(&id, &client).await?;
+            crate::services::image_host_service::rehost_image_urls(&arc.image_host, &mut tg.covers)
+                .await;
+            title_group = Some(tg);
         }
         ComicVineResourceType::Volume => {}
     };

@@ -11,6 +11,7 @@
     />
     <div class="pictures input-list">
       <label>{{ t('general.pictures') }}</label>
+      <ImageUploader v-if="publicArcadiaSettings.display_image_host_drag_and_drop" @uploaded="onImageUploaded" />
       <div v-for="(_picture, index) in editedArtist.pictures" :key="index">
         <InputText size="small" v-model="editedArtist.pictures[index]" />
         <Button v-if="index == 0" @click="addPicture" icon="pi pi-plus" size="small" />
@@ -29,9 +30,12 @@ import Button from 'primevue/button'
 import { ref, onMounted, toRaw } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BBCodeEditor from '../community/BBCodeEditor.vue'
+import ImageUploader from '../ImageUploader.vue'
 import { editArtist, type Artist, type EditedArtist } from '@/services/api-schema'
+import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 
 const { t } = useI18n()
+const publicArcadiaSettings = usePublicArcadiaSettingsStore()
 
 const props = defineProps<{
   initialArtist: EditedArtist
@@ -55,6 +59,14 @@ const addPicture = () => {
 
 const removePicture = (index: number) => {
   editedArtist.value.pictures.splice(index, 1)
+}
+
+const onImageUploaded = (url: string) => {
+  if (editedArtist.value.pictures.length === 1 && editedArtist.value.pictures[0] === '') {
+    editedArtist.value.pictures[0] = url
+  } else {
+    editedArtist.value.pictures.push(url)
+  }
 }
 
 const sendEdits = () => {
