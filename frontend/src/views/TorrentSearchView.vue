@@ -56,6 +56,7 @@ const loadFormFromUrl = () => {
   loading.value = true
   const form: TorrentSearch = {
     title_group_name: route.query.title_group_name?.toString() ?? '',
+    title_group_tags: route.query.title_group_tags?.toString() || null,
     page: route.query.page ? parseInt(route.query.page as string) : 1,
     page_size: route.query.page_size ? parseInt(route.query.page_size as string) : 25,
     torrent_created_by_id: route.query.torrent_created_by_id ? parseInt(route.query.torrent_created_by_id as string) : null,

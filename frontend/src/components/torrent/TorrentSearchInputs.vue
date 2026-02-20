@@ -9,6 +9,19 @@
       </div>
       <div class="line">
         <FloatLabel>
+          <Textarea
+            size="small"
+            v-model="searchForm.title_group_tags"
+            name="title_group_tags"
+            :rows="2"
+            class="tag-query"
+            v-tooltip.top="t('general.supports_full_boolean_search')"
+          />
+          <label for="title_group_tags">{{ t('general.tags') }}</label>
+        </FloatLabel>
+      </div>
+      <div class="line">
+        <FloatLabel>
           <InputNumber size="small" v-model="searchForm.torrent_snatched_by_id" name="snatched_by_user_id" />
           <label for="snatched_by_user_id">{{ t('torrent.snatched_by_user_id') }}</label>
         </FloatLabel>
@@ -140,7 +153,7 @@ import ContentContainer from '../ContentContainer.vue'
 import InputText from 'primevue/inputtext'
 import FloatLabel from 'primevue/floatlabel'
 import Button from 'primevue/button'
-import { Dropdown, InputNumber, MultiSelect } from 'primevue'
+import { Dropdown, InputNumber, MultiSelect, Textarea } from 'primevue'
 import { useRouter } from 'vue-router'
 import { TorrentSearchOrderByColumn, type TorrentSearch } from '@/services/api-schema'
 import { getOrderByDirectionOptions, getSelectableContentTypes, getSelectableVideoResolutions, getLanguages } from '@/services/helpers'
@@ -174,6 +187,7 @@ const staffOptionChoices = ref([
 
 const searchForm = ref<TorrentSearch>({
   title_group_name: '',
+  title_group_tags: null,
   title_group_include_empty_groups: false,
   title_group_content_type: [],
   title_group_category: [],
@@ -244,6 +258,9 @@ watch(
 <style>
 .title-group-name {
   width: 40em;
+}
+.tag-query {
+  width: 30em;
 }
 .tags {
   width: 30%;

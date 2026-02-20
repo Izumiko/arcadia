@@ -26,6 +26,7 @@
     "country": "Country",
     "tags_comma_separated": "Tags (comma separated)",
     "tags": "Tags",
+    "supports_full_boolean_search": "Supports full boolean search",
     "alias": "Alias | Aliases",
     "link": "Link | Links",
     "report": "Report",

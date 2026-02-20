@@ -490,6 +490,13 @@ impl ConnectionPool {
             None => (None, None),
         };
 
+        let tag_filter_jsonb: Option<serde_json::Value> = match &form.title_group_tags {
+            Some(s) => {
+                crate::utils::tag_expression::parse_tag_expression(s).map_err(Error::BadRequest)?
+            }
+            None => None,
+        };
+
         let limit = form.page_size;
         let offset = (form.page - 1) * form.page_size;
 
@@ -557,6 +564,14 @@ impl ConnectionPool {
                     AND ta.completed_at IS NOT NULL
                 )
             )
+            AND (
+                $21::JSONB IS NULL OR
+                EXISTS (
+                    SELECT 1 FROM jsonb_array_elements($21) AS clause
+                    WHERE COALESCE(ARRAY(SELECT jsonb_array_elements_text(clause->'include'))::varchar[], '{}') <@ title_group_tag_names
+                    AND NOT title_group_tag_names && COALESCE(ARRAY(SELECT jsonb_array_elements_text(clause->'exclude'))::varchar[], '{}')
+                )
+            )
 
             GROUP BY title_group_id, title_group_name, title_group_covers, title_group_category,
             title_group_content_type, title_group_tag_names, title_group_original_release_date,
@@ -605,7 +620,8 @@ impl ConnectionPool {
             form.edition_group_source.as_slice() as &[Source],
             form.torrent_video_resolution.as_slice() as &[VideoResolution],
             form.torrent_language.as_slice() as &[Language],
-            form.torrent_snatched_by_id
+            form.torrent_snatched_by_id,
+            tag_filter_jsonb.clone() as Option<serde_json::Value>
         )
         .fetch_all(self.borrow())
         .await
@@ -654,6 +670,14 @@ impl ConnectionPool {
                     AND ta.grabbed_at IS NOT NULL
                 )
             )
+            AND (
+                $16::JSONB IS NULL OR
+                EXISTS (
+                    SELECT 1 FROM jsonb_array_elements($16) AS clause
+                    WHERE COALESCE(ARRAY(SELECT jsonb_array_elements_text(clause->'include'))::varchar[], '{}') <@ title_group_tag_names
+                    AND NOT title_group_tag_names && COALESCE(ARRAY(SELECT jsonb_array_elements_text(clause->'exclude'))::varchar[], '{}')
+                )
+            )
             "#,
             form.torrent_staff_checked,
             form.torrent_reported,
@@ -669,7 +693,8 @@ impl ConnectionPool {
             form.torrent_video_resolution.as_slice() as &[VideoResolution],
             form.torrent_language.as_slice() as &[Language],
             form.series_id,
-            form.torrent_snatched_by_id
+            form.torrent_snatched_by_id,
+            tag_filter_jsonb as Option<serde_json::Value>
         )
         .fetch_optional(self.borrow())
         .await

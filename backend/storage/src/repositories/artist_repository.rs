@@ -176,6 +176,7 @@ impl ConnectionPool {
         let torrent_search_form = TorrentSearch {
             artist_id: Some(artist_id.to_owned()),
             title_group_include_empty_groups: false,
+            title_group_tags: None,
             title_group_name: None,
             title_group_content_type: Vec::new(),
             title_group_category: Vec::new(),

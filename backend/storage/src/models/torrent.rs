@@ -481,6 +481,7 @@ pub struct TorrentSearch {
     pub title_group_content_type: Vec<ContentType>,
     #[serde(default)]
     pub title_group_category: Vec<TitleGroupCategory>,
+    pub title_group_tags: Option<String>,
     pub title_group_include_empty_groups: bool,
     // edition group fields
     #[serde(default)]
