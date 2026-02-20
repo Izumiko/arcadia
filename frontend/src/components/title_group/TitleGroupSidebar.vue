@@ -44,9 +44,17 @@
       </div>
     </ContentContainer>
     <ContentContainer :container-title="t('series.series')" v-if="series.id">
-      <RouterLink :to="`/series/${series.id}`">
-        {{ series.name }}
-      </RouterLink>
+      <div class="series">
+        <RouterLink :to="`/series/${series.id}`">
+          {{ series.name }}
+        </RouterLink>
+        <i
+          v-if="userStore.permissions.includes('remove_title_group_from_series')"
+          class="pi pi-times"
+          @click="removeSeries"
+          v-tooltip.top="t('title_group.remove_series')"
+        />
+      </div>
     </ContentContainer>
     <ContentContainer :container-title="t('general.tags')">
       <div class="tags" v-for="tag in title_group.tags" :key="tag">
@@ -73,6 +81,7 @@ import ImagePreview from '../ImagePreview.vue'
 import TitleGroupTagSearchBar from './TitleGroupTagSearchBar.vue'
 import {
   applyTagToTitleGroup,
+  removeTitleGroupFromSeries,
   removeTagFromTitleGroup,
   type AffiliatedArtistHierarchy,
   type AffiliatedEntityHierarchy,
@@ -81,13 +90,16 @@ import {
   type TitleGroupLite,
   type TitleGroupTagLite,
 } from '@/services/api-schema'
+import { useUserStore } from '@/stores/user'
 
 const { t } = useI18n()
+const userStore = useUserStore()
 
 const emit = defineEmits<{
   editAffiliatedArtistsClicked: []
   tagApplied: [string]
   tagRemoved: [string]
+  seriesRemoved: []
 }>()
 
 const props = defineProps<{
@@ -102,6 +114,12 @@ const props = defineProps<{
 const applyTag = async (tag: TitleGroupTagLite) => {
   applyTagToTitleGroup({ tag_id: tag.id, title_group_id: props.title_group.id }).then(() => {
     emit('tagApplied', tag.name)
+  })
+}
+
+const removeSeries = () => {
+  removeTitleGroupFromSeries({ series_id: props.series.id, title_group_id: props.title_group.id }).then(() => {
+    emit('seriesRemoved')
   })
 }
 
@@ -151,6 +169,7 @@ const removeTag = async (tag_name: string) => {
   justify-content: center;
   align-items: center;
 }
+.series,
 .tags {
   display: flex;
   justify-content: space-between;

@@ -1834,6 +1834,10 @@ export interface Register200Response {
 export interface RemoveAffiliatedArtistsForm {
     'affiliation_ids': Array<number>;
 }
+export interface RemoveTitleGroupFromSeriesRequest {
+    'series_id': number;
+    'title_group_id': number;
+}
 export interface RemovedTitleGroupTag {
     'tag_name': string;
     'title_group_id': number;
@@ -3196,6 +3200,7 @@ export const UserPermission = {
     DeleteCollage: 'delete_collage',
     EditSeries: 'edit_series',
     DeleteSeries: 'delete_series',
+    RemoveTitleGroupFromSeries: 'remove_title_group_from_series',
     EditTorrentRequest: 'edit_torrent_request',
     EditForumPost: 'edit_forum_post',
     EditForumThread: 'edit_forum_thread',
@@ -4739,6 +4744,19 @@ export const getSeriesEntries = async (request: GetSeriesEntriesRequest, options
     });
     return response.data.data;
 };
+
+
+
+export const removeTitleGroupFromSeries = async (removeTitleGroupFromSeriesRequest: RemoveTitleGroupFromSeriesRequest, options?: RawAxiosRequestConfig): Promise<void> => {
+    const response = await globalAxios.request<void>({
+        url: '/api/series/title-group',
+        method: 'DELETE',
+        data: removeTitleGroupFromSeriesRequest,
+        ...options
+    });
+    return response.data;
+};
+
 
 
 

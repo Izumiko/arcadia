@@ -81,6 +81,7 @@ pub enum UserPermission {
     DeleteCollage,
     EditSeries,
     DeleteSeries,
+    RemoveTitleGroupFromSeries,
     EditTorrentRequest,
     EditForumPost,
     EditForumThread,

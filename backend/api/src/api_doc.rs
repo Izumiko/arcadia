@@ -119,6 +119,7 @@ use arcadia_storage::models::user_application::UserApplicationHierarchy;
         crate::handlers::series::edit_series::exec,
         crate::handlers::series::delete_series::exec,
         crate::handlers::series::add_title_group::exec,
+        crate::handlers::series::remove_title_group::exec,
         crate::handlers::subscriptions::create_subscription_forum_thread_posts::exec,
         crate::handlers::subscriptions::remove_subscription_forum_thread_posts::exec,
         crate::handlers::subscriptions::create_subscription_title_group_torrents::exec,

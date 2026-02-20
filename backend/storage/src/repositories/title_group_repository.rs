@@ -651,6 +651,27 @@ impl ConnectionPool {
         Ok(())
     }
 
+    pub async fn unassign_title_group_from_series(
+        &self,
+        title_group_id: i32,
+        series_id: i64,
+    ) -> Result<()> {
+        let _ = sqlx::query!(
+            r#"
+            UPDATE title_groups
+            SET series_id = NULL, updated_at = NOW()
+            WHERE id = $1 AND series_id = $2
+            "#,
+            title_group_id,
+            series_id
+        )
+        .execute(self.borrow())
+        .await
+        .map_err(|e| Error::ErrorWhileUpdatingTitleGroup(e.to_string()))?;
+
+        Ok(())
+    }
+
     pub async fn does_title_group_with_link_exist(
         &self,
         external_link: &str,

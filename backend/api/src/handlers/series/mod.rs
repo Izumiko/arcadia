@@ -4,6 +4,7 @@ pub mod delete_series;
 pub mod edit_series;
 pub mod get_series;
 pub mod get_series_entries;
+pub mod remove_title_group;
 
 use actix_web::web::{delete, get, post, put, resource, ServiceConfig};
 use arcadia_storage::redis::RedisPoolInterface;
@@ -17,5 +18,9 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
             .route(delete().to(self::delete_series::exec::<R>)),
     );
     cfg.service(resource("/entries").route(get().to(self::get_series_entries::exec::<R>)));
-    cfg.service(resource("/title-group").route(post().to(self::add_title_group::exec::<R>)));
+    cfg.service(
+        resource("/title-group")
+            .route(post().to(self::add_title_group::exec::<R>))
+            .route(delete().to(self::remove_title_group::exec::<R>)),
+    );
 }
