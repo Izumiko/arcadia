@@ -12,7 +12,7 @@ impl ConnectionPool {
                 (SELECT COUNT(*) FROM users WHERE last_seen >= NOW() - INTERVAL '1 day')::BIGINT AS "users_active_today!",
                 (SELECT COUNT(*) FROM users WHERE last_seen >= NOW() - INTERVAL '7 days')::BIGINT AS "users_active_this_week!",
                 (SELECT COUNT(*) FROM users WHERE last_seen >= NOW() - INTERVAL '30 days')::BIGINT AS "users_active_this_month!",
-                (SELECT COUNT(*) FROM torrents)::BIGINT AS "torrents!",
+                (SELECT COUNT(*) FROM torrents WHERE deleted_at IS NULL)::BIGINT AS "torrents!",
                 (SELECT COUNT(DISTINCT eg.title_group_id) FROM edition_groups eg INNER JOIN torrents t ON t.edition_group_id = eg.id)::BIGINT AS "titles!",
                 (SELECT COUNT(*) FROM artists)::BIGINT AS "artists!",
                 (SELECT COUNT(*) FROM peers WHERE active = TRUE)::BIGINT AS "peers!",
