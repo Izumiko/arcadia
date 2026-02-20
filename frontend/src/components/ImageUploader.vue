@@ -1,30 +1,35 @@
 <template>
-  <FileUpload
-    accept="image/*"
-    multiple
-    customUpload
-    :auto="true"
-    :showUploadButton="false"
-    :showCancelButton="false"
-    :chooseLabel="t('general.select_or_drop_images')"
-    chooseIcon="pi pi-image"
-    @uploader="onUpload"
-    v-tooltip.top="t('general.select_or_drop_images_hint')"
-  >
-    <template #content="{ files, removeFileCallback }">
-      <div v-if="files.length > 0 || uploadedFiles.length > 0" class="image-preview-list">
-        <div v-for="(file, index) in files" :key="file.name + file.lastModified" class="image-preview-item">
-          <img :src="getObjectUrl(file)" :alt="file.name" class="preview-thumbnail" />
-          <ProgressBar :value="progress[file.name]" :showValue="false" class="preview-progress" />
-          <Button icon="pi pi-times" severity="danger" size="small" text rounded @click="removeFileCallback(index)" />
-        </div>
-        <div v-for="(uploaded, index) in uploadedFiles" :key="index" class="image-preview-item uploaded" :class="{ 'fade-out': uploaded.fading }">
-          <img :src="uploaded.url" :alt="uploaded.name" class="preview-thumbnail" />
-          <i class="pi pi-check" />
-        </div>
-      </div>
-    </template>
-  </FileUpload>
+  <div class="image-uploader">
+    <div @dragover.prevent @drop.prevent="onDrop">
+      <FileUpload
+        accept="image/*"
+        multiple
+        customUpload
+        :auto="true"
+        :showUploadButton="false"
+        :showCancelButton="false"
+        :chooseLabel="t('general.select_or_drop_images')"
+        chooseIcon="pi pi-image"
+        @uploader="onUpload"
+        v-tooltip.top="t('general.select_or_drop_images_hint')"
+      >
+        <template #content="{ files, removeFileCallback }">
+          <div v-if="files.length > 0 || uploadedFiles.length > 0" class="image-preview-list">
+            <div v-for="(file, index) in files" :key="file.name + file.lastModified" class="image-preview-item">
+              <img :src="getObjectUrl(file)" :alt="file.name" class="preview-thumbnail" />
+              <ProgressBar :value="progress[file.name]" :showValue="false" class="preview-progress" />
+              <Button icon="pi pi-times" severity="danger" size="small" text rounded @click="removeFileCallback(index)" />
+            </div>
+            <div v-for="(uploaded, index) in uploadedFiles" :key="index" class="image-preview-item uploaded" :class="{ 'fade-out': uploaded.fading }">
+              <img :src="uploaded.url" :alt="uploaded.name" class="preview-thumbnail" />
+              <i class="pi pi-check" />
+            </div>
+          </div>
+        </template>
+      </FileUpload>
+    </div>
+    <span>{{ t('general.or_paste_image_urls') }}</span>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -54,8 +59,17 @@ const getObjectUrl = (file: File) => {
   return objectUrls.get(key)!
 }
 
+const onDrop = (event: DragEvent) => {
+  const files = Array.from(event.dataTransfer?.files ?? []).filter((f) => f.type.startsWith('image/'))
+  if (files.length > 0) uploadFiles(files)
+}
+
 const onUpload = (event: FileUploadUploaderEvent) => {
   const files = Array.isArray(event.files) ? event.files : [event.files]
+  uploadFiles(files)
+}
+
+const uploadFiles = (files: File[]) => {
   for (const file of files) {
     const formData = new FormData()
     formData.append('image', file)
@@ -93,6 +107,12 @@ const onUpload = (event: FileUploadUploaderEvent) => {
 </script>
 
 <style scoped>
+.image-uploader {
+  display: flex;
+  flex-direction: column;
+  color: var(--p-text-muted-color);
+}
+
 .empty-label {
   color: var(--p-text-muted-color);
   font-size: 0.85rem;

@@ -18,6 +18,7 @@
     "pictures": "Pictures",
     "select_or_drop_images": "Select or drop images here",
     "select_or_drop_images_hint": "This will autofill the url field below",
+    "or_paste_image_urls": "Or paste image urls in the field(s) below",
     "name": "Name",
     "title": "Title",
     "category": "Category",
