@@ -115,15 +115,7 @@
         dateFormat="yy-mm-dd"
         name="release_date"
       />
-      <InputNumber
-        v-else
-        :modelValue="release_year"
-        @update:modelValue="onReleaseYearChange"
-        inputId="release_year"
-        size="small"
-        :useGrouping="false"
-        name="release_date"
-      />
+      <InputNumber v-else v-model="release_year" inputId="release_year" size="small" :useGrouping="false" name="release_date" />
       <Message v-if="$form.release_date?.invalid" severity="error" size="small" variant="simple">
         {{ $form.release_date.error?.message }}
       </Message>
@@ -211,16 +203,19 @@ const release_date = computed({
   },
 })
 
-const release_year = ref<number | null>(null)
+const release_year = computed({
+  get() {
+    const dateStr = editionGroupForm.value.release_date
+    if (!dateStr) return null
+    return parseInt(dateStr.split('-')[0], 10)
+  },
+  set(newValue: number | null) {
+    editionGroupForm.value.release_date = newValue ? `${newValue}-01-01` : null
+  },
+})
 
 const onOnlyYearKnownChange = () => {
   editionGroupForm.value.release_date = null
-  release_year.value = null
-}
-
-const onReleaseYearChange = (value: number | null) => {
-  release_year.value = value
-  editionGroupForm.value.release_date = value ? `${value}-01-01` : null
 }
 
 const resolver = ({ values }: FormResolverOptions) => {
@@ -282,13 +277,21 @@ const onFormSubmit = ({ valid }: FormSubmitEvent) => {
 //   editionGroupForm.value.external_links.splice(index, 1)
 // }
 //
+const setReleaseDateFieldValue = () => {
+  if (editionGroupForm.value.release_date_only_year_known) {
+    formRef.value?.setFieldValue('release_date', release_year.value)
+  } else {
+    formRef.value?.setFieldValue('release_date', editionGroupForm.value.release_date)
+  }
+}
+
 const updateEditionGroupForm = (form: UserCreatedEditionGroup) => {
   editionGroupForm.value = {
     ...editionGroupForm.value,
     ...form,
   }
   nextTick().then(() => {
-    formRef.value?.setFieldValue('release_date', editionGroupForm.value.release_date)
+    setReleaseDateFieldValue()
     formRef.value?.setFieldValue('source', editionGroupForm.value.source)
   })
 }
@@ -301,15 +304,11 @@ onMounted(() => {
   if (initialEditionGroupForm !== null) {
     editionGroupForm.value = initialEditionGroupForm
     updateEditionGroupForm(editionGroupForm.value)
-    if (editionGroupForm.value.release_date) {
-      release_year.value = parseInt(editionGroupForm.value.release_date.substring(0, 4), 10)
-    }
   } else if (titleGroup.original_release_date) {
     editionGroupForm.value.release_date_only_year_known = titleGroup.original_release_date_only_year_known
     editionGroupForm.value.release_date = titleGroup.original_release_date
-    release_year.value = parseInt(titleGroup.original_release_date.substring(0, 4), 10)
     nextTick().then(() => {
-      formRef.value?.setFieldValue('release_date', titleGroup.original_release_date!)
+      setReleaseDateFieldValue()
     })
   }
 })
