@@ -9,11 +9,29 @@ on:
         description: Push the resulting image? (Overrides anything!)
         default: false
         type: boolean
+      prod_build:
+        description: Production Build?
+        default: true
+        type: boolean
 
 jobs:
   build-and-push-image:
 
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+          - name: backend
+            context: .
+            dockerfile: ./backend/api/Dockerfile
+          - name: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+          - name: tracker
+            context: .
+            dockerfile: ./tracker/arcadia_tracker/Dockerfile
 
     permissions:
       packages: write
@@ -23,8 +41,13 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
-      
+        uses: actions/checkout@v6
+
+      - name: Define build type
+        run: |
+          echo "PRODUCTION_BUILD=${{ inputs.prod_build }}" >> ./backend/api/.env.docker
+          echo "PRODUCTION_BUILD=${{ inputs.prod_build }}" >> ./tracker/arcadia_tracker/.env.docker
+
       - name: Set up Docker
         uses: docker/setup-docker-action@v4
         with:
@@ -36,26 +59,36 @@ jobs:
               }
             }
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: image=moby/buildkit:master,network=host
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-            images: ghcr.io/${{ github.repository }}
+            images: ghcr.io/${{ github.repository }}/${{ matrix.component.name }}
 
       - name: Log in to the Container Registry
-        uses: docker/login-action@v3.4.0
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
+          platforms: linux/amd64,linux/arm64
+          context: ${{ matrix.component.context }}
+          file: ${{ matrix.component.dockerfile }}
           push: ${{ inputs.always_push || github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-to: type=gha
-          cache-from: type=gha,mode=max
-          
+          cache-to: type=gha,scope=${{ github.workflow }}-${{ matrix.component.name }}
+          cache-from: type=gha,mode=max,scope=${{ github.workflow }}-${{ matrix.component.name }}
+
