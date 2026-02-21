@@ -19,7 +19,9 @@
     <DataTable :value="searchResults" size="small" lazy :sortField="searchForm.order_by_column" :sortOrder @sort="onSort">
       <Column :header="t('general.name')" field="name" sortable>
         <template #body="slotProps">
-          {{ slotProps.data.name }}
+          <RouterLink :to="{ path: '/torrents', query: { title_group_tags: slotProps.data.name } }">
+            {{ slotProps.data.name }}
+          </RouterLink>
         </template>
       </Column>
       <Column :header="t('general.created_by')">

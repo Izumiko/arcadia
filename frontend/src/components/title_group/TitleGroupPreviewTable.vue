@@ -15,7 +15,12 @@
             nameLink
           />
         </div>
-        <span class="tags">{{ title_group.tags.join(', ') }}</span>
+        <span class="tags">
+          <template v-for="(tag, index) in title_group.tags" :key="tag">
+            <RouterLink :to="{ path: '/torrents', query: { title_group_tags: tag } }" @click="scrollToTop">{{ tag }}</RouterLink>
+            <template v-if="index < title_group.tags.length - 1">, </template>
+          </template>
+        </span>
         <TitleGroupTable :title_group="title_group" :editionGroups="title_group.edition_groups" :preview="true" />
       </div>
       <div class="left">
@@ -41,6 +46,8 @@ defineProps<{
 const emit = defineEmits<{
   delete: [titleGroupId: number]
 }>()
+
+const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 </script>
 <style scoped>
 .title-group-preview-table {

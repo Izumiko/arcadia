@@ -58,7 +58,7 @@
     </ContentContainer>
     <ContentContainer :container-title="t('general.tags')">
       <div class="tags" v-for="tag in title_group.tags" :key="tag">
-        <div>{{ tag }}</div>
+        <RouterLink :to="{ path: '/torrents', query: { title_group_tags: tag } }">{{ tag }}</RouterLink>
         <i class="pi pi-times" @click="removeTag(tag)" v-tooltip.top="t('title_group.remove_tag')" />
       </div>
       <div>
