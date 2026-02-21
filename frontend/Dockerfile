@@ -4,13 +4,16 @@ FROM node:${NODE_VERSION}-slim AS build
 
 WORKDIR /home/node/app
 
+COPY package.json package-lock.json ./
+
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --verbose --no-audit
+
 COPY . .
 
 # env vars are needed at build time
 RUN cp -n .env.docker .env
 
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --verbose --no-audit
 # This should be npm run build
 RUN npx vite build
 

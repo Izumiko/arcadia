@@ -26,6 +26,8 @@ COPY --from=planner /app/backend/storage/migrations/ migrations/
 # Necessary for `init_db`
 RUN cargo install sqlx-cli --no-default-features --features native-tls,postgres
 
+COPY backend/api/.env.docker backend/api/.env.docker
+
 # Caches the target directory for intermediate build artifacts.
 # Checks the .env.docker file to choose between dev and prod builds.
 # `cargo chef cook` downloads, builds, and caches all of the dependencies for future builds.
@@ -49,11 +51,11 @@ FROM debian:bookworm-slim AS runtime
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y libssl-dev openssl curl pkg-config ca-certificates
+RUN apt-get update && apt-get install -y openssl curl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/bin/arcadia-api /usr/local/bin
 
 # should reply with 404 if the backend is running
-HEALTHCHECK --interval=2s --timeout=3s --retries=10 CMD curl http://localhost:8080/health || exit 0
+HEALTHCHECK --interval=2s --timeout=3s --retries=10 CMD curl http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["/usr/local/bin/arcadia-api"]
