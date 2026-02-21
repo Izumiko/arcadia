@@ -6,10 +6,7 @@ use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::{
     forum::{ForumPost, UserCreatedForumPost},
-    notification::{
-        NotificationForumThreadPost, NotificationStaffPmMessage, NotificationTitleGroupComment,
-        NotificationTorrentRequestComment,
-    },
+    notification::Notifications,
     staff_pm::{StaffPm, StaffPmMessage, UserCreatedStaffPm, UserCreatedStaffPmMessage},
     title_group_comment::{TitleGroupComment, UserCreatedTitleGroupComment},
     torrent_request_comment::TorrentRequestComment,
@@ -74,15 +71,14 @@ async fn test_subscriber_receives_notification_on_new_title_group_comment(pool: 
 
     // User B checks notifications
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/title-group-comments?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationTitleGroupComment> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
 
-    assert_eq!(notifications.len(), 1);
-    assert_eq!(notifications[0].title_group_id, 1);
-    assert!(!notifications[0].read_status);
+    assert_eq!(notifications.title_group_comments.len(), 1);
+    assert_eq!(notifications.title_group_comments[0].title_group_id, 1);
+    assert!(!notifications.title_group_comments[0].read_status);
 
     // Verify counter in get me route
     let me_req = test::TestRequest::get()
@@ -129,13 +125,12 @@ async fn test_comment_creator_does_not_receive_own_notification(pool: PgPool) {
 
     // User should NOT receive notification for their own comment
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/title-group-comments?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user.token))
         .to_request();
-    let notifications: Vec<NotificationTitleGroupComment> =
-        common::call_and_read_body_json(&service, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service, notif_req).await;
 
-    assert_eq!(notifications.len(), 0);
+    assert_eq!(notifications.title_group_comments.len(), 0);
 
     // Verify counter stays at 0 in get me route
     let me_req = test::TestRequest::get()
@@ -199,13 +194,12 @@ async fn test_no_duplicate_unread_title_group_notifications(pool: PgPool) {
 
     // User B should only have 1 unread notification (no duplicates)
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/title-group-comments?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationTitleGroupComment> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
 
-    assert_eq!(notifications.len(), 1);
+    assert_eq!(notifications.title_group_comments.len(), 1);
 
     // Verify counter is 1 (not 2) in get me route
     let me_req = test::TestRequest::get()
@@ -273,15 +267,14 @@ async fn test_subscriber_receives_notification_on_new_forum_post(pool: PgPool) {
 
     // User B checks notifications
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/forum-thread-posts?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationForumThreadPost> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
 
-    assert_eq!(notifications.len(), 1);
-    assert_eq!(notifications[0].forum_thread_id, 100);
-    assert!(!notifications[0].read_status);
+    assert_eq!(notifications.forum_thread_posts.len(), 1);
+    assert_eq!(notifications.forum_thread_posts[0].forum_thread_id, 100);
+    assert!(!notifications.forum_thread_posts[0].read_status);
 
     // Verify counter in get me route
     let me_req = test::TestRequest::get()
@@ -331,13 +324,12 @@ async fn test_post_creator_does_not_receive_own_notification(pool: PgPool) {
 
     // User should NOT receive notification for their own post
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/forum-thread-posts?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user.token))
         .to_request();
-    let notifications: Vec<NotificationForumThreadPost> =
-        common::call_and_read_body_json(&service, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service, notif_req).await;
 
-    assert_eq!(notifications.len(), 0);
+    assert_eq!(notifications.forum_thread_posts.len(), 0);
 
     // Verify counter stays at 0 in get me route
     let me_req = test::TestRequest::get()
@@ -404,13 +396,12 @@ async fn test_no_duplicate_unread_forum_notifications(pool: PgPool) {
 
     // User B should only have 1 unread notification (no duplicates)
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/forum-thread-posts?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationForumThreadPost> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
 
-    assert_eq!(notifications.len(), 1);
+    assert_eq!(notifications.forum_thread_posts.len(), 1);
 
     // Verify counter is 1 (not 2) in get me route
     let me_req = test::TestRequest::get()
@@ -472,12 +463,11 @@ async fn test_include_read_filter_title_group_notifications(pool: PgPool) {
 
     // With include_read=false, should see 1 notification
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/title-group-comments?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationTitleGroupComment> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
-    assert_eq!(notifications.len(), 1);
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
+    assert_eq!(notifications.title_group_comments.len(), 1);
 
     // Verify counter in get me route
     let me_req = test::TestRequest::get()
@@ -489,12 +479,11 @@ async fn test_include_read_filter_title_group_notifications(pool: PgPool) {
 
     // With include_read=true, should also see 1 notification (same result, just includes read ones too)
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/title-group-comments?include_read=true")
+        .uri("/api/notifications?include_read=true")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationTitleGroupComment> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
-    assert_eq!(notifications.len(), 1);
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
+    assert_eq!(notifications.title_group_comments.len(), 1);
 }
 
 // Conversation Notifications
@@ -600,15 +589,17 @@ async fn test_staff_receives_notification_on_new_staff_pm(pool: PgPool) {
 
     // User B (staff) checks notifications
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/staff-pm-messages?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationStaffPmMessage> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
 
-    assert_eq!(notifications.len(), 1);
-    assert_eq!(notifications[0].staff_pm_subject, "Test Staff PM");
-    assert!(!notifications[0].read_status);
+    assert_eq!(notifications.staff_pm_messages.len(), 1);
+    assert_eq!(
+        notifications.staff_pm_messages[0].staff_pm_subject,
+        "Test Staff PM"
+    );
+    assert!(!notifications.staff_pm_messages[0].read_status);
 
     // Verify counter in get me route
     let me_req = test::TestRequest::get()
@@ -661,12 +652,11 @@ async fn test_creator_receives_notification_on_staff_reply(pool: PgPool) {
 
     // Clear user A's notifications (they created the PM so shouldn't have any)
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/staff-pm-messages?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_a.token))
         .to_request();
-    let notifications: Vec<NotificationStaffPmMessage> =
-        common::call_and_read_body_json(&service, notif_req).await;
-    assert_eq!(notifications.len(), 0);
+    let notifications: Notifications = common::call_and_read_body_json(&service, notif_req).await;
+    assert_eq!(notifications.staff_pm_messages.len(), 0);
 
     // User B (staff) replies to the staff PM
     let reply_body = UserCreatedStaffPmMessage {
@@ -684,14 +674,13 @@ async fn test_creator_receives_notification_on_staff_reply(pool: PgPool) {
 
     // User A (creator) should now have a notification
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/staff-pm-messages?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_a.token))
         .to_request();
-    let notifications: Vec<NotificationStaffPmMessage> =
-        common::call_and_read_body_json(&service, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service, notif_req).await;
 
-    assert_eq!(notifications.len(), 1);
-    assert_eq!(notifications[0].staff_pm_id, staff_pm.id);
+    assert_eq!(notifications.staff_pm_messages.len(), 1);
+    assert_eq!(notifications.staff_pm_messages[0].staff_pm_id, staff_pm.id);
 
     // Verify counter in get me route
     let me_req = test::TestRequest::get()
@@ -729,13 +718,12 @@ async fn test_message_creator_does_not_receive_own_staff_pm_notification(pool: P
 
     // User A should NOT receive notification for their own message
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/staff-pm-messages?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_a.token))
         .to_request();
-    let notifications: Vec<NotificationStaffPmMessage> =
-        common::call_and_read_body_json(&service, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service, notif_req).await;
 
-    assert_eq!(notifications.len(), 0);
+    assert_eq!(notifications.staff_pm_messages.len(), 0);
 
     // Verify counter stays at 0 in get me route
     let me_req = test::TestRequest::get()
@@ -788,12 +776,11 @@ async fn test_notifications_marked_as_read_when_staff_pm_resolved(pool: PgPool) 
 
     // User B (staff) should have unread notification
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/staff-pm-messages?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationStaffPmMessage> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
-    assert_eq!(notifications.len(), 1);
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
+    assert_eq!(notifications.staff_pm_messages.len(), 1);
 
     // Verify counter in get me route before resolve
     let me_req = test::TestRequest::get()
@@ -813,12 +800,11 @@ async fn test_notifications_marked_as_read_when_staff_pm_resolved(pool: PgPool) 
 
     // User B should have no unread notifications now
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/staff-pm-messages?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationStaffPmMessage> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
-    assert_eq!(notifications.len(), 0);
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
+    assert_eq!(notifications.staff_pm_messages.len(), 0);
 
     // Verify counter in get me route after resolve
     let me_req = test::TestRequest::get()
@@ -830,13 +816,12 @@ async fn test_notifications_marked_as_read_when_staff_pm_resolved(pool: PgPool) 
 
     // But with include_read=true, should still see it
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/staff-pm-messages?include_read=true")
+        .uri("/api/notifications?include_read=true")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationStaffPmMessage> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
-    assert_eq!(notifications.len(), 1);
-    assert!(notifications[0].read_status);
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
+    assert_eq!(notifications.staff_pm_messages.len(), 1);
+    assert!(notifications.staff_pm_messages[0].read_status);
 }
 
 // Torrent Request Comment Notifications
@@ -894,15 +879,17 @@ async fn test_subscriber_receives_notification_on_new_torrent_request_comment(po
 
     // User B checks notifications
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/torrent-request-comments?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationTorrentRequestComment> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
 
-    assert_eq!(notifications.len(), 1);
-    assert_eq!(notifications[0].torrent_request_id, 1);
-    assert!(!notifications[0].read_status);
+    assert_eq!(notifications.torrent_request_comments.len(), 1);
+    assert_eq!(
+        notifications.torrent_request_comments[0].torrent_request_id,
+        1
+    );
+    assert!(!notifications.torrent_request_comments[0].read_status);
 }
 
 #[sqlx::test(
@@ -942,13 +929,12 @@ async fn test_comment_creator_does_not_receive_own_torrent_request_notification(
 
     // User should NOT receive notification for their own comment
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/torrent-request-comments?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user.token))
         .to_request();
-    let notifications: Vec<NotificationTorrentRequestComment> =
-        common::call_and_read_body_json(&service, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service, notif_req).await;
 
-    assert_eq!(notifications.len(), 0);
+    assert_eq!(notifications.torrent_request_comments.len(), 0);
 }
 
 #[sqlx::test(
@@ -1005,13 +991,12 @@ async fn test_no_duplicate_unread_torrent_request_notifications(pool: PgPool) {
 
     // User B should only have 1 unread notification (no duplicates)
     let notif_req = test::TestRequest::get()
-        .uri("/api/notifications/torrent-request-comments?include_read=false")
+        .uri("/api/notifications?include_read=false")
         .insert_header(auth_header(&user_b.token))
         .to_request();
-    let notifications: Vec<NotificationTorrentRequestComment> =
-        common::call_and_read_body_json(&service_b, notif_req).await;
+    let notifications: Notifications = common::call_and_read_body_json(&service_b, notif_req).await;
 
-    assert_eq!(notifications.len(), 1);
+    assert_eq!(notifications.torrent_request_comments.len(), 1);
 }
 
 // Unread Announcements

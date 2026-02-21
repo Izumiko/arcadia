@@ -1103,6 +1103,10 @@ export interface GetMe200Response {
     'data': Profile;
     'side_effects': Array<SideEffect>;
 }
+export interface GetNotifications200Response {
+    'data': Notifications;
+    'side_effects': Array<SideEffect>;
+}
 export interface GetNotificationsForForumThreadPosts200Response {
     'data': Array<NotificationForumThreadPost>;
     'side_effects': Array<SideEffect>;
@@ -1409,6 +1413,12 @@ export interface NotificationTorrentRequestComment {
     'title_group_name': string;
     'torrent_request_comment_id': number;
     'torrent_request_id': number;
+}
+export interface Notifications {
+    'forum_thread_posts': Array<NotificationForumThreadPost>;
+    'staff_pm_messages': Array<NotificationStaffPmMessage>;
+    'title_group_comments': Array<NotificationTitleGroupComment>;
+    'torrent_request_comments': Array<NotificationTorrentRequestComment>;
 }
 
 export const OrderByDirection = {
@@ -4301,6 +4311,19 @@ export const createMasterGroup = async (userCreatedMasterGroup: UserCreatedMaste
     return response.data.data;
 };
 
+
+
+
+
+export const getNotifications = async (includeRead: boolean, options?: RawAxiosRequestConfig): Promise<GetNotifications200Response['data']> => {
+    const response = await globalAxios.request<GetNotifications200Response>({
+        url: '/api/notifications',
+        method: 'GET',
+        params: { 'include_read': includeRead },
+        ...options
+    });
+    return response.data.data;
+};
 
 
 

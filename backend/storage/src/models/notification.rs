@@ -46,3 +46,11 @@ pub struct NotificationStaffPmMessage {
     pub created_at: DateTime<Utc>,
     pub read_status: bool,
 }
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct Notifications {
+    pub forum_thread_posts: Vec<NotificationForumThreadPost>,
+    pub title_group_comments: Vec<NotificationTitleGroupComment>,
+    pub torrent_request_comments: Vec<NotificationTorrentRequestComment>,
+    pub staff_pm_messages: Vec<NotificationStaffPmMessage>,
+}

@@ -27,26 +27,16 @@
 
 <script setup lang="ts">
 import { Column, DataTable } from 'primevue'
-import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import { timeAgo } from '@/services/helpers'
 import { useNotificationsStore } from '@/stores/notifications'
-import { getNotificationsForTorrentRequestComments, type NotificationTorrentRequestComment } from '@/services/api-schema'
+import type { NotificationTorrentRequestComment } from '@/services/api-schema'
+
+defineProps<{
+  notifications: NotificationTorrentRequestComment[]
+}>()
 
 const notificationsStore = useNotificationsStore()
 const { t } = useI18n()
-
-const includeRead = ref(false)
-const notifications = ref<NotificationTorrentRequestComment[]>([])
-
-const fetchNotifications = () => {
-  getNotificationsForTorrentRequestComments(includeRead.value).then((n) => {
-    notifications.value = n
-  })
-}
-
-onMounted(() => {
-  fetchNotifications()
-})
 </script>

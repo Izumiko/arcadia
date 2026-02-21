@@ -2,7 +2,7 @@ use crate::{
     connection_pool::ConnectionPool,
     models::notification::{
         NotificationForumThreadPost, NotificationStaffPmMessage, NotificationTitleGroupComment,
-        NotificationTorrentRequestComment,
+        NotificationTorrentRequestComment, Notifications,
     },
 };
 use arcadia_common::error::{Error, Result};
@@ -10,6 +10,113 @@ use sqlx::{Postgres, Transaction};
 use std::borrow::Borrow;
 
 impl ConnectionPool {
+    pub async fn find_all_notifications(
+        &self,
+        user_id: i32,
+        include_read: bool,
+    ) -> Result<Notifications> {
+        let forum_thread_posts = sqlx::query_as!(
+            NotificationForumThreadPost,
+            r#"
+            SELECT
+                n.id,
+                n.forum_post_id,
+                p.forum_thread_id,
+                t.name AS forum_thread_name,
+                n.created_at,
+                n.read_status
+            FROM notifications_forum_thread_posts n
+            JOIN forum_posts p ON p.id = n.forum_post_id
+            JOIN forum_threads t ON t.id = n.forum_thread_id
+            WHERE n.user_id = $1
+            AND ($2::bool = TRUE OR n.read_status = FALSE)
+            ORDER BY n.created_at DESC
+            "#,
+            user_id,
+            include_read
+        )
+        .fetch_all(self.borrow())
+        .await
+        .map_err(Error::CouldNotGetUnreadNotifications)?;
+
+        let title_group_comments = sqlx::query_as!(
+            NotificationTitleGroupComment,
+            r#"
+            SELECT
+                n.id,
+                n.title_group_comment_id,
+                n.title_group_id,
+                tg.name AS title_group_name,
+                n.created_at,
+                n.read_status
+            FROM notifications_title_group_comments n
+            JOIN title_groups tg ON tg.id = n.title_group_id
+            WHERE n.user_id = $1
+            AND ($2::bool = TRUE OR n.read_status = FALSE)
+            ORDER BY n.created_at DESC
+            "#,
+            user_id,
+            include_read
+        )
+        .fetch_all(self.borrow())
+        .await
+        .map_err(Error::CouldNotGetUnreadNotifications)?;
+
+        let torrent_request_comments = sqlx::query_as!(
+            NotificationTorrentRequestComment,
+            r#"
+            SELECT
+                n.id,
+                n.torrent_request_comment_id,
+                n.torrent_request_id,
+                tg.name AS title_group_name,
+                n.created_at,
+                n.read_status
+            FROM notifications_torrent_request_comments n
+            JOIN torrent_requests tr ON tr.id = n.torrent_request_id
+            JOIN title_groups tg ON tg.id = tr.title_group_id
+            WHERE n.user_id = $1
+            AND ($2::bool = TRUE OR n.read_status = FALSE)
+            ORDER BY n.created_at DESC
+            "#,
+            user_id,
+            include_read
+        )
+        .fetch_all(self.borrow())
+        .await
+        .map_err(Error::CouldNotGetUnreadNotifications)?;
+
+        let staff_pm_messages = sqlx::query_as!(
+            NotificationStaffPmMessage,
+            r#"
+            SELECT
+                n.id,
+                n.staff_pm_message_id,
+                n.staff_pm_id,
+                sp.subject AS staff_pm_subject,
+                n.created_at,
+                n.read_status
+            FROM notifications_staff_pm_messages n
+            JOIN staff_pms sp ON sp.id = n.staff_pm_id
+            WHERE n.user_id = $1
+            AND ($2::bool = TRUE OR n.read_status = FALSE)
+            ORDER BY n.created_at DESC
+            "#,
+            user_id,
+            include_read
+        )
+        .fetch_all(self.borrow())
+        .await
+        .map_err(Error::CouldNotGetUnreadNotifications)?;
+
+        Ok(Notifications {
+            forum_thread_posts,
+            title_group_comments,
+            torrent_request_comments,
+            staff_pm_messages,
+        })
+    }
+
     pub async fn notify_users_title_group_torrents(
         tx: &mut Transaction<'_, Postgres>,
         title_group_id: i32,
@@ -121,38 +228,6 @@ impl ConnectionPool {
         Ok(count)
     }
 
-    pub async fn find_notifications_forum_thread_posts(
-        &self,
-        user_id: i32,
-        include_read: bool,
-    ) -> Result<Vec<NotificationForumThreadPost>> {
-        let notifications = sqlx::query_as!(
-            NotificationForumThreadPost,
-            r#"
-            SELECT
-                n.id,
-                n.forum_post_id,
-                p.forum_thread_id,
-                t.name AS forum_thread_name,
-                n.created_at,
-                n.read_status
-            FROM notifications_forum_thread_posts n
-            JOIN forum_posts p ON p.id = n.forum_post_id
-            JOIN forum_threads t ON t.id = n.forum_thread_id
-            WHERE n.user_id = $1
-            AND ($2::bool = TRUE OR n.read_status = FALSE)
-            ORDER BY n.created_at DESC
-            "#,
-            user_id,
-            include_read
-        )
-        .fetch_all(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetUnreadNotifications)?;
-
-        Ok(notifications)
-    }
-
     pub async fn mark_notification_forum_thread_post_as_read(
         &self,
         forum_thread_id: i64,
@@ -233,37 +308,6 @@ impl ConnectionPool {
         Ok(count)
     }
 
-    pub async fn find_notifications_title_group_comments(
-        &self,
-        user_id: i32,
-        include_read: bool,
-    ) -> Result<Vec<NotificationTitleGroupComment>> {
-        let notifications = sqlx::query_as!(
-            NotificationTitleGroupComment,
-            r#"
-            SELECT
-                n.id,
-                n.title_group_comment_id,
-                n.title_group_id,
-                tg.name AS title_group_name,
-                n.created_at,
-                n.read_status
-            FROM notifications_title_group_comments n
-            JOIN title_groups tg ON tg.id = n.title_group_id
-            WHERE n.user_id = $1
-            AND ($2::bool = TRUE OR n.read_status = FALSE)
-            ORDER BY n.created_at DESC
-            "#,
-            user_id,
-            include_read
-        )
-        .fetch_all(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetUnreadNotifications)?;
-
-        Ok(notifications)
-    }
-
     pub async fn mark_notification_title_group_comment_as_read(
         &self,
         title_group_id: i32,
@@ -342,38 +386,6 @@ impl ConnectionPool {
         .unwrap_or(0);
 
         Ok(count)
-    }
-
-    pub async fn find_notifications_torrent_request_comments(
-        &self,
-        user_id: i32,
-        include_read: bool,
-    ) -> Result<Vec<NotificationTorrentRequestComment>> {
-        let notifications = sqlx::query_as!(
-            NotificationTorrentRequestComment,
-            r#"
-            SELECT
-                n.id,
-                n.torrent_request_comment_id,
-                n.torrent_request_id,
-                tg.name AS title_group_name,
-                n.created_at,
-                n.read_status
-            FROM notifications_torrent_request_comments n
-            JOIN torrent_requests tr ON tr.id = n.torrent_request_id
-            JOIN title_groups tg ON tg.id = tr.title_group_id
-            WHERE n.user_id = $1
-            AND ($2::bool = TRUE OR n.read_status = FALSE)
-            ORDER BY n.created_at DESC
-            "#,
-            user_id,
-            include_read
-        )
-        .fetch_all(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetUnreadNotifications)?;
-
-        Ok(notifications)
     }
 
     pub async fn mark_notification_torrent_request_comment_as_read(
@@ -460,37 +472,6 @@ impl ConnectionPool {
         .unwrap_or(0);
 
         Ok(count)
-    }
-
-    pub async fn find_notifications_staff_pm_messages(
-        &self,
-        user_id: i32,
-        include_read: bool,
-    ) -> Result<Vec<NotificationStaffPmMessage>> {
-        let notifications = sqlx::query_as!(
-            NotificationStaffPmMessage,
-            r#"
-            SELECT
-                n.id,
-                n.staff_pm_message_id,
-                n.staff_pm_id,
-                sp.subject AS staff_pm_subject,
-                n.created_at,
-                n.read_status
-            FROM notifications_staff_pm_messages n
-            JOIN staff_pms sp ON sp.id = n.staff_pm_id
-            WHERE n.user_id = $1
-            AND ($2::bool = TRUE OR n.read_status = FALSE)
-            ORDER BY n.created_at DESC
-            "#,
-            user_id,
-            include_read
-        )
-        .fetch_all(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetUnreadNotifications)?;
-
-        Ok(notifications)
     }
 
     pub async fn mark_notifications_staff_pm_messages_as_read(
