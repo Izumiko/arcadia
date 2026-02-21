@@ -495,12 +495,14 @@ dependencies = [
  "jsonwebtoken",
  "log",
  "musicbrainz_rs",
+ "opentelemetry",
  "percent-encoding",
  "reqwest",
  "serde",
  "serde_bencode",
  "serde_json",
  "sqlx",
+ "strum",
  "thiserror 2.0.16",
 ]
 

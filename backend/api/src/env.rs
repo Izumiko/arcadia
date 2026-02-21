@@ -23,6 +23,8 @@ pub struct Env {
     pub tmdb_api_key: Option<String>,
     #[envconfig(nested)]
     pub image_host: ImageHostConfig,
+    #[envconfig(from = "OTEL_SERVICE_NAME")]
+    pub otel_service_name: Option<String>,
     #[envconfig(from = "BONUS_POINTS_FORMULA")]
     pub bonus_points_formula: String,
     #[envconfig(from = "TASK_INTERVAL_SEEDTIME_AND_BONUS_POINTS_UPDATE_SECONDS")]

@@ -1,4 +1,4 @@
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, strum::AsRefStr)]
 pub enum Error {
     #[error("database error: {0}")]
     GenericDatabaseError(#[from] sqlx::Error),
@@ -636,8 +636,10 @@ impl actix_web::ResponseError for Error {
     }
 
     fn error_response(&self) -> actix_web::HttpResponse {
+        let status_code = self.status_code();
         log::error!("The request generated this error: {self}");
-        actix_web::HttpResponse::build(self.status_code()).json(serde_json::json!({
+        crate::metrics::record_error(self.as_ref(), status_code.as_u16());
+        actix_web::HttpResponse::build(status_code).json(serde_json::json!({
             "error": format!("{self}"),
         }))
     }

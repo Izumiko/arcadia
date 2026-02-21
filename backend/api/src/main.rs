@@ -21,6 +21,12 @@ async fn main() -> std::io::Result<()> {
 
     let mut env = Env::init_from_env().unwrap();
 
+    if let Some(service_name) = &env.otel_service_name {
+        arcadia_common::metrics::register(service_name);
+    } else {
+        log::info!("OTEL_SERVICE_NAME is not set, skipping metrics registration");
+    }
+
     let server_url = format!("{}:{}", env.actix.host, env.actix.port);
     println!("Server running at http://{server_url}");
 
