@@ -4,7 +4,34 @@ pub enum Error {
     GenericDatabaseError(#[from] sqlx::Error),
 
     #[error("{0}")]
-    BadRequest(String),
+    InvalidPassword(String),
+
+    #[error("passwords do not match")]
+    PasswordsDoNotMatch,
+
+    #[error("donation amount must be positive")]
+    DonationAmountMustBePositive,
+
+    #[error("{0}")]
+    InvalidArcadiaSettings(String),
+
+    #[error("{0}")]
+    BonusPointsSnatchCostOutOfRange(String),
+
+    #[error("{0}")]
+    InvalidTorrentSearchQuery(String),
+
+    #[error("invalid bonus points formula: {0}")]
+    InvalidBonusPointsFormula(String),
+
+    #[error("{0}")]
+    PromotionNotAvailable(String),
+
+    #[error("{0}")]
+    InvalidTagExpression(String),
+
+    #[error("tag '{0}' was deleted: {1}")]
+    TitleGroupTagDeleted(String, String),
 
     #[error("account banned")]
     AccountBanned,
@@ -528,8 +555,7 @@ impl actix_web::ResponseError for Error {
 
         match self {
             // 400 Bad Request
-            Error::BadRequest(_)
-            | Error::UsernameAlreadyExists
+            Error::UsernameAlreadyExists
             | Error::InvitationKeyInvalid
             | Error::InvitationKeyRequired
             | Error::InvitationKeyAlreadyUsed
@@ -548,7 +574,17 @@ impl actix_web::ResponseError for Error {
             | Error::ImageHostNotApproved(_)
             | Error::ImageHostNotConfigured
             | Error::ContentReleasedAfterCutoff(_)
-            | Error::VoteBountyRequired => StatusCode::BAD_REQUEST,
+            | Error::VoteBountyRequired
+            | Error::InvalidPassword(_)
+            | Error::PasswordsDoNotMatch
+            | Error::DonationAmountMustBePositive
+            | Error::InvalidArcadiaSettings(_)
+            | Error::BonusPointsSnatchCostOutOfRange(_)
+            | Error::InvalidTorrentSearchQuery(_)
+            | Error::InvalidBonusPointsFormula(_)
+            | Error::PromotionNotAvailable(_)
+            | Error::InvalidTagExpression(_)
+            | Error::TitleGroupTagDeleted(..) => StatusCode::BAD_REQUEST,
 
             // 401 Unauthorized
             Error::InvalidOrExpiredRefreshToken | Error::InvalidatedToken => {

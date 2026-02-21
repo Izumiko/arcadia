@@ -25,22 +25,22 @@ pub fn validate_username(username: &str) -> Result<()> {
 
 pub fn validate_password(password: &str) -> Result<()> {
     if password.len() < 12 {
-        return Err(Error::BadRequest(
+        return Err(Error::InvalidPassword(
             "Password must be at least 12 characters long".to_string(),
         ));
     }
     if !password.chars().any(|c| c.is_uppercase()) {
-        return Err(Error::BadRequest(
+        return Err(Error::InvalidPassword(
             "Password must contain at least one uppercase letter".to_string(),
         ));
     }
     if !password.chars().any(|c| c.is_lowercase()) {
-        return Err(Error::BadRequest(
+        return Err(Error::InvalidPassword(
             "Password must contain at least one lowercase letter".to_string(),
         ));
     }
     if !password.chars().any(|c| c.is_numeric()) {
-        return Err(Error::BadRequest(
+        return Err(Error::InvalidPassword(
             "Password must contain at least one number".to_string(),
         ));
     }
@@ -49,7 +49,7 @@ pub fn validate_password(password: &str) -> Result<()> {
 
 pub fn validate_password_verification(password: &str, password_verify: &str) -> Result<()> {
     if password != password_verify {
-        return Err(Error::BadRequest("Passwords do not match".to_string()));
+        return Err(Error::PasswordsDoNotMatch);
     }
     Ok(())
 }

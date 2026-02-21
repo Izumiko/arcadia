@@ -51,7 +51,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 ) -> Result<HttpResponse> {
     let seeders_sql = query.seeders_per_torrent.to_seeders_sql();
     let formula_sql = formula_to_sql(&arc.bonus_points_formula, seeders_sql)
-        .map_err(|e| arcadia_common::error::Error::BadRequest(e.to_string()))?;
+        .map_err(|e| arcadia_common::error::Error::InvalidBonusPointsFormula(e.to_string()))?;
 
     let task_interval = arc.seedtime_and_bonus_points_update_seconds;
     let ticks_per_day = (query.hours_seeding_per_day as i64 * 3600) / task_interval as i64;

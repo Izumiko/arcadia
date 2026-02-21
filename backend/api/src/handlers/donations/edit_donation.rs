@@ -52,9 +52,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc.pool.find_user_with_id(request.donated_by_id).await?;
 
     if request.amount <= 0.0 {
-        return Err(Error::BadRequest(
-            "Donation amount must be positive".to_string(),
-        ));
+        return Err(Error::DonationAmountMustBePositive);
     }
 
     if let Some(edits) = existing_donation.diff(&request) {

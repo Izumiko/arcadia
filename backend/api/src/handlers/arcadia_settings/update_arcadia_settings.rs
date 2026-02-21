@@ -45,25 +45,25 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     ];
     let filled_field_count = automated_message_fields.iter().filter(|&&x| x).count();
     if filled_field_count > 0 && filled_field_count < 4 {
-        return Err(arcadia_common::error::Error::BadRequest(
+        return Err(arcadia_common::error::Error::InvalidArcadiaSettings(
             "All automated message on signup fields (message, sender_id, locked, conversation_name) must be provided if any is set".to_string(),
         ));
     }
 
     if settings.torrent_bonus_points_cost_min < 0 {
-        return Err(arcadia_common::error::Error::BadRequest(
+        return Err(arcadia_common::error::Error::InvalidArcadiaSettings(
             "torrent_bonus_points_cost_min must be greater than or equal to 0".to_string(),
         ));
     }
 
     if settings.torrent_bonus_points_cost_max < 0 {
-        return Err(arcadia_common::error::Error::BadRequest(
+        return Err(arcadia_common::error::Error::InvalidArcadiaSettings(
             "torrent_bonus_points_cost_max must be greater than or equal to 0".to_string(),
         ));
     }
 
     if settings.torrent_bonus_points_cost_min > settings.torrent_bonus_points_cost_max {
-        return Err(arcadia_common::error::Error::BadRequest(
+        return Err(arcadia_common::error::Error::InvalidArcadiaSettings(
             "torrent_bonus_points_cost_min must be less than or equal to torrent_bonus_points_cost_max".to_string(),
         ));
     }

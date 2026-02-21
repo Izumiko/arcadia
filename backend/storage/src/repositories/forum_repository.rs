@@ -304,7 +304,7 @@ impl ConnectionPool {
         user_id: i32,
     ) -> Result<ForumThreadEnriched> {
         if edited_thread.name.trim().is_empty() {
-            return Err(Error::BadRequest("Thread name cannot be empty".to_string()));
+            return Err(Error::ForumThreadNameEmpty);
         }
 
         let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)

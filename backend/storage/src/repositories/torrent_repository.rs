@@ -491,9 +491,8 @@ impl ConnectionPool {
         };
 
         let tag_filter_jsonb: Option<serde_json::Value> = match &form.title_group_tags {
-            Some(s) => {
-                crate::utils::tag_expression::parse_tag_expression(s).map_err(Error::BadRequest)?
-            }
+            Some(s) => crate::utils::tag_expression::parse_tag_expression(s)
+                .map_err(Error::InvalidTagExpression)?,
             None => None,
         };
 

@@ -75,22 +75,25 @@ fn test_validate_password() {
     assert!(validate_password(&("a".repeat(12) + "A1")).is_ok());
 
     // Invalid passwords
-    assert!(matches!(validate_password(""), Err(Error::BadRequest(_))));
+    assert!(matches!(
+        validate_password(""),
+        Err(Error::InvalidPassword(_))
+    ));
     assert!(matches!(
         validate_password("short"),
-        Err(Error::BadRequest(_))
+        Err(Error::InvalidPassword(_))
     )); // too short
     assert!(matches!(
         validate_password("nouppercase123"),
-        Err(Error::BadRequest(_))
+        Err(Error::InvalidPassword(_))
     )); // no uppercase
     assert!(matches!(
         validate_password("NOLOWERCASE123"),
-        Err(Error::BadRequest(_))
+        Err(Error::InvalidPassword(_))
     )); // no lowercase
     assert!(matches!(
         validate_password("NoNumbers"),
-        Err(Error::BadRequest(_))
+        Err(Error::InvalidPassword(_))
     )); // no numbers
 }
 
@@ -102,10 +105,10 @@ fn test_validate_password_verification() {
     // Invalid password verification
     assert!(matches!(
         validate_password_verification("Password1234", ""),
-        Err(Error::BadRequest(_))
+        Err(Error::PasswordsDoNotMatch)
     ));
     assert!(matches!(
         validate_password_verification("Password1234", "DifferentPass123"),
-        Err(Error::BadRequest(_))
+        Err(Error::PasswordsDoNotMatch)
     ));
 }

@@ -29,24 +29,26 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .pool
         .get_next_user_class(&user_stats.class_name)
         .await?
-        .ok_or_else(|| Error::BadRequest("No next class available for promotion".to_string()))?;
+        .ok_or_else(|| {
+            Error::PromotionNotAvailable("No next class available for promotion".to_string())
+        })?;
 
     // Check if promotion can be bought (cost > 0 means it can be purchased)
     let cost = next_class.promotion_cost_bonus_points;
     if cost == 0 {
-        return Err(Error::BadRequest(
+        return Err(Error::PromotionNotAvailable(
             "This class promotion cannot be bought".to_string(),
         ));
     }
 
     if user_stats.warned && !next_class.promotion_allowed_while_warned {
-        return Err(Error::BadRequest(
+        return Err(Error::PromotionNotAvailable(
             "Cannot buy promotion while warned".to_string(),
         ));
     }
 
     if !meets_requirements(&user_stats, &next_class) {
-        return Err(Error::BadRequest(
+        return Err(Error::PromotionNotAvailable(
             "You do not meet the requirements for this promotion".to_string(),
         ));
     }

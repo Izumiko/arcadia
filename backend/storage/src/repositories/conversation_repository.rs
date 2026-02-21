@@ -73,7 +73,9 @@ impl ConnectionPool {
 
                 match is_locked {
                     Some(true) => Err(Error::ConversationLocked),
-                    Some(false) => Err(Error::BadRequest("".to_string())),
+                    Some(false) => Err(Error::CouldNotCreateConversationMessage(
+                        sqlx::Error::RowNotFound,
+                    )),
                     None => Err(Error::CouldNotFindConversation(sqlx::Error::RowNotFound)),
                 }
             }

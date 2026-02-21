@@ -43,10 +43,7 @@ impl ConnectionPool {
 
         if let Some(deletion_reason) = deleted_tag {
             let reason = deletion_reason.unwrap_or_default();
-            return Err(Error::BadRequest(format!(
-                "Tag '{}' can not be used: {}",
-                sanitized_name, reason
-            )));
+            return Err(Error::TitleGroupTagDeleted(sanitized_name.clone(), reason));
         }
 
         let mut created_tag = sqlx::query_as!(
@@ -212,8 +209,7 @@ impl ConnectionPool {
     ) -> Result<()> {
         let tag_id = self.find_tag_id_by_name(tag_name).await?;
 
-        let tag_id =
-            tag_id.ok_or_else(|| Error::BadRequest(format!("Tag '{}' not found", tag_name)))?;
+        let tag_id = tag_id.ok_or(Error::TitleGroupTagNotFound)?;
 
         sqlx::query!(
             r#"

@@ -110,7 +110,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 ) -> Result<HttpResponse> {
     let seeders_sql = query.seeders_per_torrent.to_seeders_sql();
     let formula_sql = formula_to_sql(&arc.bonus_points_formula, seeders_sql)
-        .map_err(|e| arcadia_common::error::Error::BadRequest(e.to_string()))?;
+        .map_err(|e| arcadia_common::error::Error::InvalidBonusPointsFormula(e.to_string()))?;
 
     let bonus_per_tick = arc
         .pool
