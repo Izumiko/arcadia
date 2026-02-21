@@ -510,7 +510,11 @@ CREATE TABLE title_group_tags (
     synonyms VARCHAR(40)[] DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     created_by_id INT NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    deleted_by_id INT DEFAULT NULL,
+    deletion_reason VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (deleted_by_id) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE (name)
 );
 
@@ -522,10 +526,11 @@ DECLARE
 BEGIN
     -- Loop through each synonym in the new row
     FOREACH existing IN ARRAY NEW.synonyms LOOP
-        -- Check if this synonym exists in any other row (or if it's an existing tag name)
+        -- Check if this synonym exists in any other non-deleted row (or if it's an existing tag name)
         SELECT name INTO conflict_tag_name
         FROM title_group_tags
         WHERE id <> NEW.id
+          AND deleted_at IS NULL
           AND (existing = ANY(synonyms) OR existing = name)
         LIMIT 1;
 
@@ -1345,6 +1350,7 @@ LEFT JOIN LATERAL (
                 FROM title_group_applied_tags tat
                 JOIN title_group_tags t ON t.id = tat.tag_id
                 WHERE tat.title_group_id = title_groups.id
+                  AND t.deleted_at IS NULL
             ),
             ARRAY[]::text[]
         ) AS tag_names

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            UPDATE title_group_tags\n            SET name = $1, synonyms = $2\n            WHERE id = $3\n            RETURNING\n                id,\n                name,\n                synonyms as \"synonyms!: Vec<String>\",\n                created_at,\n                created_by_id\n            ",
+  "query": "\n            UPDATE title_group_tags\n            SET name = $1, synonyms = $2\n            WHERE id = $3 AND deleted_at IS NULL\n            RETURNING\n                id,\n                name,\n                synonyms as \"synonyms!: Vec<String>\",\n                created_at,\n                created_by_id\n            ",
   "describe": {
     "columns": [
       {
@@ -44,5 +44,5 @@
       false
     ]
   },
-  "hash": "4bafd6a70687276fadf2d95c9d837b9475a4def60927e195f0495b69afa21424"
+  "hash": "de1e042cc927cad5e027878e0dd2f38745ab00bcd882d21c7c00b18836a0c7b2"
 }

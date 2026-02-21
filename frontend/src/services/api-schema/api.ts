@@ -451,11 +451,12 @@ export interface DeleteForumSubCategoryQuery {
 export interface DeleteForumThreadQuery {
     'id': number;
 }
-export interface DeleteTagRequest {
-    'id': number;
-}
 export interface DeleteTitleGroupQuery {
     'title_group_id': number;
+}
+export interface DeleteTitleGroupTagRequest {
+    'deletion_reason': string;
+    'id': number;
 }
 export interface DeleteTorrentReportQuery {
     'torrent_report_id': number;
@@ -5148,11 +5149,11 @@ export const createTitleGroupTag = async (userCreatedTitleGroupTag: UserCreatedT
 
 
 
-export const deleteTitleGroupTag = async (deleteTagRequest: DeleteTagRequest, options?: RawAxiosRequestConfig): Promise<void> => {
+export const deleteTitleGroupTag = async (deleteTitleGroupTagRequest: DeleteTitleGroupTagRequest, options?: RawAxiosRequestConfig): Promise<void> => {
     const response = await globalAxios.request<void>({
         url: '/api/title-group-tags',
         method: 'DELETE',
-        data: deleteTagRequest,
+        data: deleteTitleGroupTagRequest,
         ...options
     });
     return response.data;

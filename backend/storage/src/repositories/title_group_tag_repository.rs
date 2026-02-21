@@ -3,8 +3,8 @@ use crate::{
     models::{
         common::PaginatedResults,
         title_group_tag::{
-            EditedTitleGroupTag, SearchTitleGroupTagsQuery, TitleGroupTag, TitleGroupTagEnriched,
-            TitleGroupTagLite, UserCreatedTitleGroupTag,
+            DeleteTitleGroupTagRequest, EditedTitleGroupTag, SearchTitleGroupTagsQuery,
+            TitleGroupTag, TitleGroupTagEnriched, TitleGroupTagLite, UserCreatedTitleGroupTag,
         },
         user::UserLite,
     },
@@ -27,6 +27,27 @@ impl ConnectionPool {
         user_id: i32,
     ) -> Result<TitleGroupTag> {
         let sanitized_name = Self::sanitize_tag_name(&tag.name);
+
+        // Check if a soft-deleted tag with this name exists
+        let deleted_tag = sqlx::query_scalar!(
+            r#"
+            SELECT deletion_reason
+            FROM title_group_tags
+            WHERE name = $1 AND deleted_at IS NOT NULL
+            "#,
+            sanitized_name
+        )
+        .fetch_optional(self.borrow())
+        .await
+        .map_err(Error::CouldNotCreateTitleGroupTag)?;
+
+        if let Some(deletion_reason) = deleted_tag {
+            let reason = deletion_reason.unwrap_or_default();
+            return Err(Error::BadRequest(format!(
+                "Tag '{}' can not be used: {}",
+                sanitized_name, reason
+            )));
+        }
 
         let mut created_tag = sqlx::query_as!(
             TitleGroupTag,
@@ -75,7 +96,7 @@ impl ConnectionPool {
 
         let tag_id = sqlx::query_scalar!(
             r#"
-            SELECT id FROM title_group_tags WHERE name = $1
+            SELECT id FROM title_group_tags WHERE name = $1 AND deleted_at IS NULL
             "#,
             sanitized_name
         )
@@ -96,7 +117,7 @@ impl ConnectionPool {
                 created_at,
                 created_by_id
             FROM title_group_tags
-            WHERE id = $1
+            WHERE id = $1 AND deleted_at IS NULL
             "#,
             tag_id
         )
@@ -116,7 +137,7 @@ impl ConnectionPool {
             r#"
             UPDATE title_group_tags
             SET name = $1, synonyms = $2
-            WHERE id = $3
+            WHERE id = $3 AND deleted_at IS NULL
             RETURNING
                 id,
                 name,
@@ -136,13 +157,20 @@ impl ConnectionPool {
         Ok(updated_tag)
     }
 
-    pub async fn delete_title_group_tag(&self, tag_id: i32) -> Result<()> {
+    pub async fn delete_title_group_tag(
+        &self,
+        request: &DeleteTitleGroupTagRequest,
+        user_id: i32,
+    ) -> Result<()> {
         let rows_affected = sqlx::query!(
             r#"
-            DELETE FROM title_group_tags
-            WHERE id = $1
+            UPDATE title_group_tags
+            SET deleted_at = NOW(), deleted_by_id = $2, deletion_reason = $3
+            WHERE id = $1 AND deleted_at IS NULL
             "#,
-            tag_id
+            request.id,
+            user_id,
+            request.deletion_reason
         )
         .execute(self.borrow())
         .await
@@ -215,11 +243,14 @@ impl ConnectionPool {
             SELECT COUNT(*)::BIGINT
             FROM title_group_tags
             WHERE
-                name ILIKE '%' || $1 || '%'
-                OR EXISTS (
-                    SELECT 1
-                    FROM unnest(synonyms) AS synonym
-                    WHERE synonym ILIKE '%' || $1 || '%'
+                deleted_at IS NULL
+                AND (
+                    name ILIKE '%' || $1 || '%'
+                    OR EXISTS (
+                        SELECT 1
+                        FROM unnest(synonyms) AS synonym
+                        WHERE synonym ILIKE '%' || $1 || '%'
+                    )
                 )
             "#,
             query
@@ -237,11 +268,14 @@ impl ConnectionPool {
                 id
             FROM title_group_tags
             WHERE
-                name ILIKE '%' || $1 || '%'
-                OR EXISTS (
-                    SELECT 1
-                    FROM unnest(synonyms) AS synonym
-                    WHERE synonym ILIKE '%' || $1 || '%'
+                deleted_at IS NULL
+                AND (
+                    name ILIKE '%' || $1 || '%'
+                    OR EXISTS (
+                        SELECT 1
+                        FROM unnest(synonyms) AS synonym
+                        WHERE synonym ILIKE '%' || $1 || '%'
+                    )
                 )
             ORDER BY name
             LIMIT $2 OFFSET $3
@@ -273,11 +307,14 @@ impl ConnectionPool {
             SELECT COUNT(*)::BIGINT
             FROM title_group_tags t
             WHERE
-                t.name ILIKE '%' || $1 || '%'
-                OR EXISTS (
-                    SELECT 1
-                    FROM unnest(t.synonyms) AS synonym
-                    WHERE synonym ILIKE '%' || $1 || '%'
+                t.deleted_at IS NULL
+                AND (
+                    t.name ILIKE '%' || $1 || '%'
+                    OR EXISTS (
+                        SELECT 1
+                        FROM unnest(t.synonyms) AS synonym
+                        WHERE synonym ILIKE '%' || $1 || '%'
+                    )
                 )
             "#,
             query.name
@@ -303,11 +340,14 @@ impl ConnectionPool {
             FROM title_group_tags t
             JOIN users u ON t.created_by_id = u.id
             WHERE
-                t.name ILIKE '%' || $1 || '%'
-                OR EXISTS (
-                    SELECT 1
-                    FROM unnest(t.synonyms) AS synonym
-                    WHERE synonym ILIKE '%' || $1 || '%'
+                t.deleted_at IS NULL
+                AND (
+                    t.name ILIKE '%' || $1 || '%'
+                    OR EXISTS (
+                        SELECT 1
+                        FROM unnest(t.synonyms) AS synonym
+                        WHERE synonym ILIKE '%' || $1 || '%'
+                    )
                 )
             ORDER BY
                 CASE WHEN $2 = 'name' AND $3 = 'asc' THEN t.name END ASC,

@@ -30,7 +30,7 @@ pub struct EditedTitleGroupTag {
     pub synonyms: Vec<String>,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TitleGroupTagLite {
     pub name: String,
     pub synonyms: Vec<String>,
@@ -69,6 +69,12 @@ pub struct SearchTitleGroupTagsQuery {
     pub page_size: u32,
     pub order_by_column: TitleGroupTagSearchOrderByColumn,
     pub order_by_direction: OrderByDirection,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct DeleteTitleGroupTagRequest {
+    pub id: i32,
+    pub deletion_reason: String,
 }
 
 impl TitleGroupTag {

@@ -297,6 +297,8 @@
     "existing_title_group_explanation": "The title group already exists. Make sure that the torrent you're trying to upload isn't already part of it, and use the 'add format' button.",
     "go_to_title_group": "Go to the title group",
     "add_tag": "Add tag",
+    "confirm_delete_tag": "Are you sure you want to delete this tag?",
+    "deletion_reason": "Deletion reason",
     "tag_will_be_created": "This tag will be created",
     "add_synonym": "Add synonym (press enter)",
     "remove_tag": "Remove tag",

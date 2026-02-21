@@ -93,6 +93,7 @@ pub enum TestUser {
     StaffPm,
     DeleteTorrentReport,
     RemoveTitleGroupFromSeries,
+    DeleteTitleGroupTag,
 }
 
 impl TestUser {
@@ -142,6 +143,7 @@ impl TestUser {
             TestUser::StaffPm => "user_staff_pm",
             TestUser::DeleteTorrentReport => "user_tr_del",
             TestUser::RemoveTitleGroupFromSeries => "user_rm_tg_ser",
+            TestUser::DeleteTitleGroupTag => "user_tag_del",
         };
 
         Login {
